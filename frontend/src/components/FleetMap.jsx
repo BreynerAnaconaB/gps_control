@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+
+import { useEffect, useRef } from 'react'
 import {
   MapContainer,
   TileLayer,
@@ -6,35 +7,89 @@ import {
   Popup,
   useMap,
 } from 'react-leaflet'
+import MarkerClusterGroup from 'react-leaflet-cluster'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-const vehicleIcon = L.divIcon({
-  className: 'vehicle-marker',
-  html: '<div class="marker-inner">🚚</div>',
-  iconSize: [38, 38],
-  iconAnchor: [19, 19],
-})
+function createVehicleIcon(status) {
+  const validStatuses = ['moving', 'stopped', 'no_signal']
+  const safeStatus = validStatuses.includes(status)
+    ? status
+    : 'no_signal'
+
+  return L.divIcon({
+    className: 'vehicle-marker',
+    html: `<div class="marker-inner ${safeStatus}">🚚</div>`,
+    iconSize: [38, 38],
+    iconAnchor: [19, 19],
+  })
+}
 
 function MapFocus({ vehicle }) {
   const map = useMap()
 
   useEffect(() => {
-    if (vehicle?.latitude != null && vehicle?.longitude != null) {
-      map.flyTo([vehicle.latitude, vehicle.longitude], 16, {
-        duration: 1,
-      })
+    if (
+      vehicle?.latitude != null &&
+      vehicle?.longitude != null
+    ) {
+      map.flyTo(
+        [vehicle.latitude, vehicle.longitude],
+        16,
+        { duration: 1 }
+      )
     }
   }, [vehicle, map])
 
   return null
 }
 
-export default function FleetMap({ vehicles, selectedVehicle, onSelect }) {
+function FitAllVehicles({ vehicles }) {
+  const map = useMap()
+  const hasFitted = useRef(false)
+
+  useEffect(() => {
+    if (hasFitted.current || vehicles.length === 0) return
+
+    const bounds = L.latLngBounds(
+      vehicles.map((vehicle) => [
+        vehicle.latitude,
+        vehicle.longitude,
+      ])
+    )
+
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, {
+        padding: [40, 40],
+        maxZoom: 13,
+      })
+
+      hasFitted.current = true
+    }
+  }, [vehicles, map])
+
+  return null
+}
+
+const statusLabels = {
+  moving: 'En movimiento',
+  stopped: 'Detenido',
+  no_signal: 'Sin señal',
+}
+
+export default function FleetMap({
+  vehicles,
+  selectedVehicle,
+  onSelect,
+}) {
   const validVehicles = vehicles.filter(
     (vehicle) =>
       Number.isFinite(vehicle.latitude) &&
-      Number.isFinite(vehicle.longitude)
+      Number.isFinite(vehicle.longitude) &&
+      vehicle.latitude >= -90 &&
+      vehicle.latitude <= 90 &&
+      vehicle.longitude >= -180 &&
+      vehicle.longitude <= 180
   )
 
   const initialPosition = validVehicles.length
@@ -54,25 +109,42 @@ export default function FleetMap({ vehicles, selectedVehicle, onSelect }) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {validVehicles.map((vehicle) => (
-          <Marker
-            key={vehicle.id}
-            position={[vehicle.latitude, vehicle.longitude]}
-            icon={vehicleIcon}
-            eventHandlers={{
-              click: () => onSelect(vehicle),
-            }}
-          >
-            <Popup>
-              <strong>{vehicle.name}</strong>
-              <br />
-              Velocidad: {vehicle.speed ?? 0} km/h
-              <br />
-              Altitud: {vehicle.altitude ?? 'N/D'} m
-            </Popup>
-          </Marker>
-        ))}
+        <MarkerClusterGroup
+          chunkedLoading
+          showCoverageOnHover={false}
+          spiderfyOnMaxZoom
+          maxClusterRadius={50}
+        >
+          {validVehicles.map((vehicle) => (
+            <Marker
+              key={vehicle.id}
+              position={[vehicle.latitude, vehicle.longitude]}
+              icon={createVehicleIcon(vehicle.status)}
+              eventHandlers={{
+                click: () => onSelect(vehicle),
+              }}
+            >
+              <Popup>
+                <strong>{vehicle.name}</strong>
+                <br />
+                Estado: {statusLabels[vehicle.status] || 'Desconocido'}
+                <br />
+                Velocidad: {vehicle.speed ?? 0} km/h
+                <br />
+                Dirección: {vehicle.direction ?? 'N/D'}
+                <br />
+                Altitud: {vehicle.altitude ?? 'N/D'} m
+                <br />
+                Último reporte:{' '}
+                {vehicle.last_position
+                  ? new Date(vehicle.last_position).toLocaleString('es-CO')
+                  : 'Sin información'}
+              </Popup>
+            </Marker>
+          ))}
+        </MarkerClusterGroup>
 
+        <FitAllVehicles vehicles={validVehicles} />
         <MapFocus vehicle={selectedVehicle} />
       </MapContainer>
 

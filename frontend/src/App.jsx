@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useState } from 'react'
 import { RefreshCw, Bell, Clock3 } from 'lucide-react'
 
@@ -5,13 +6,28 @@ import Sidebar from './components/Sidebar'
 import StatsCards from './components/StatsCards'
 import VehicleList from './components/VehicleList'
 import FleetMap from './components/FleetMap'
-import { getVehicles } from './services/vehicleService'
+import {
+  getVehicles,
+  getAllVehicles,
+} from './services/vehicleService'
 
 import './App.css'
 
 function App() {
   const [vehicles, setVehicles] = useState([])
+  const [vehiclePage, setVehiclePage] = useState({
+    items: [],
+    total: 0,
+    page: 1,
+    page_size: 10,
+    pages: 0,
+  })
+
   const [selectedVehicle, setSelectedVehicle] = useState(null)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
+  const [page, setPage] = useState(1)
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
@@ -19,13 +35,26 @@ function App() {
   const loadVehicles = useCallback(async () => {
     try {
       setError(null)
-      const data = await getVehicles()
 
-      setVehicles(data)
+      const [allVehicles, paginatedData] = await Promise.all([
+        getAllVehicles(),
+        getVehicles({
+          page,
+          pageSize: 10,
+          search,
+          status,
+        }),
+      ])
+
+      setVehicles(allVehicles)
+      setVehiclePage(paginatedData)
 
       setSelectedVehicle((current) => {
         if (!current) return null
-        return data.find((vehicle) => vehicle.id === current.id) ?? null
+
+        return (
+          allVehicles.find((vehicle) => vehicle.id === current.id) ?? null
+        )
       })
 
       setLastUpdate(new Date())
@@ -34,15 +63,27 @@ function App() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [page, search, status])
 
   useEffect(() => {
     loadVehicles()
+  }, [loadVehicles])
 
+  useEffect(() => {
     const interval = setInterval(loadVehicles, 30000)
 
     return () => clearInterval(interval)
   }, [loadVehicles])
+
+  const handleSearch = (value) => {
+    setSearch(value)
+    setPage(1)
+  }
+
+  const handleStatusChange = (value) => {
+    setStatus(value)
+    setPage(1)
+  }
 
   return (
     <div className="app-layout">
@@ -70,7 +111,11 @@ function App() {
               <RefreshCw size={19} />
             </button>
 
-            <button className="icon-button" type="button" title="Notificaciones">
+            <button
+              className="icon-button"
+              type="button"
+              title="Notificaciones"
+            >
               <Bell size={19} />
             </button>
           </div>
@@ -103,7 +148,9 @@ function App() {
           <StatsCards vehicles={vehicles} />
 
           {loading ? (
-            <div className="loading-state">Cargando información de la flota...</div>
+            <div className="loading-state">
+              Cargando información de la flota...
+            </div>
           ) : (
             <section className="monitoring-layout">
               <div className="map-section">
@@ -112,6 +159,7 @@ function App() {
                     <h3>Ubicación de vehículos</h3>
                     <p>Posiciones recibidas desde Wialon</p>
                   </div>
+
                   <span className="live-badge">EN VIVO</span>
                 </div>
 
@@ -123,7 +171,15 @@ function App() {
               </div>
 
               <VehicleList
-                vehicles={vehicles}
+                vehicles={vehiclePage.items}
+                total={vehiclePage.total}
+                page={vehiclePage.page}
+                pages={vehiclePage.pages}
+                search={search}
+                status={status}
+                onSearch={handleSearch}
+                onStatusChange={handleStatusChange}
+                onPageChange={setPage}
                 selectedVehicle={selectedVehicle}
                 onSelect={setSelectedVehicle}
               />

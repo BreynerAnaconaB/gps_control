@@ -1,8 +1,23 @@
-import { Truck, Activity, CircleParking, Signal } from 'lucide-react'
+
+import {
+  Truck,
+  Activity,
+  CircleParking,
+  Signal,
+} from 'lucide-react'
 
 export default function StatsCards({ vehicles }) {
-  const moving = vehicles.filter((v) => (v.speed ?? 0) > 0).length
-  const stopped = vehicles.length - moving
+  const moving = vehicles.filter(
+    (vehicle) => vehicle.status === 'moving'
+  ).length
+
+  const stopped = vehicles.filter(
+    (vehicle) => vehicle.status === 'stopped'
+  ).length
+
+  const noSignal = vehicles.filter(
+    (vehicle) => vehicle.status === 'no_signal'
+  ).length
 
   const stats = [
     {
@@ -24,10 +39,8 @@ export default function StatsCards({ vehicles }) {
       color: 'orange',
     },
     {
-      label: 'Con ubicación GPS',
-      value: vehicles.filter(
-        (v) => v.latitude != null && v.longitude != null
-      ).length,
+      label: 'Sin señal',
+      value: noSignal,
       icon: Signal,
       color: 'purple',
     },
@@ -40,6 +53,7 @@ export default function StatsCards({ vehicles }) {
           <div className={`stat-icon ${color}`}>
             <Icon size={21} />
           </div>
+
           <div>
             <span>{label}</span>
             <strong>{value}</strong>

@@ -1,6 +1,8 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 from pydantic import BaseModel, Field
+
+from app.services.vehicle_status import VehicleStatus
 
 
 class VehicleResponse(BaseModel):
@@ -14,3 +16,14 @@ class VehicleResponse(BaseModel):
     altitude: float | None = None
     satellites: int | None = None
     last_position: datetime | None = None
+
+    status: VehicleStatus
+    direction: str | None = None
+
+class VehiclePageResponse(BaseModel):
+    items: list[VehicleResponse]
+    total: int
+    page: int
+    page_size: int
+    pages: int
+
