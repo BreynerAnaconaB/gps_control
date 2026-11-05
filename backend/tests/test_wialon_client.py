@@ -1,4 +1,5 @@
-from unittest.mock import AsyncMock, patch
+
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -7,14 +8,17 @@ from app.infrastructure.wialon.client import WialonClient
 
 @pytest.mark.asyncio
 async def test_wialon_login_returns_session():
-    client = WialonClient()
+    client = WialonClient(
+        base_url="https://hst-api.wialon.com/wialon/ajax.html",
+        token="test-token",
+    )
 
-    mock_response = AsyncMock()
+    mock_response = MagicMock()
     mock_response.json.return_value = {
         "eid": "fake-session-id",
         "user": {"nm": "demoApps"},
     }
-    mock_response.raise_for_status = lambda: None
+    mock_response.raise_for_status.return_value = None
 
     with patch(
         "app.infrastructure.wialon.client.httpx.AsyncClient"
@@ -27,3 +31,4 @@ async def test_wialon_login_returns_session():
         result = await client.login()
 
     assert result["eid"] == "fake-session-id"
+    assert result["user"]["nm"] == "demoApps"

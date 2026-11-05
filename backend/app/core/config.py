@@ -1,7 +1,7 @@
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-BACKEND_DIR = Path(__file__).resolve().parent.parents[2]
+BACKEND_DIR = Path(__file__).resolve().parents[2]
 
 class Settings(BaseSettings):
     APP_NAME: str = "GPS Control API"
@@ -11,7 +11,7 @@ class Settings(BaseSettings):
 
     #configuracion de Wialon
 
-    WIALON_HOST: str | None = None
+    WIALON_BASE_URL: str | None = None
     WIALON_TOKEN: str | None = None
 
     model_config = SettingsConfigDict(
