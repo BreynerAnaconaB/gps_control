@@ -7,6 +7,7 @@ from app.core.config import settings
 from app.core.exceptions import (
     WialonAuthenticationException,
     WialonUnavailableException,
+    WialonAPIException,
 )
 
 
@@ -33,12 +34,7 @@ class WialonClient:
 
         self.timeout = httpx.Timeout(15.0)
 
-    async def login(self) -> dict:
-        payload = {
-            "svc": "token/login",
-            "params": json.dumps({"token": self.token}),
-        }
-
+    async def _post(self, payload: dict) -> dict:
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.post(self.api_url, data=payload)
@@ -49,9 +45,45 @@ class WialonClient:
             raise WialonUnavailableException() from exc
 
         if not isinstance(result, dict):
-            raise WialonAuthenticationException()
+            raise WialonUnavailableException(
+                "Invalid response received from Wialon"
+            )
+
+        return result
+
+    async def login(self) -> dict:
+        payload = {
+            "svc": "token/login",
+            "params": json.dumps({"token": self.token}),
+        }
+
+        result = await self._post(payload)
 
         if result.get("error") or not result.get("eid"):
             raise WialonAuthenticationException()
+
+        return result
+
+    async def request(
+        self,
+        service: str,
+        params: dict,
+        session_id: str,
+    ) -> dict:
+        payload = {
+            "svc": service,
+            "params": json.dumps(params),
+            "sid": session_id,
+        }
+
+        result = await self._post(payload)
+
+        if "error" in result:
+            error_code = result["error"]
+
+            raise WialonAPIException(
+                message="Wialon API request failed",
+                api_error_code=error_code,
+            )
 
         return result

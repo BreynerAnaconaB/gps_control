@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.api.v1.endpoints.health import router as health_router
+from app.api.v1.endpoints.vehicles import router as vehicles_router
 from app.core.config import settings
 from app.core.exceptions import AppException
 
@@ -33,6 +34,11 @@ async def app_exception_handler(
 
 app.include_router(
     health_router,
+    prefix=settings.API_V1_PREFIX,
+)
+
+app.include_router(
+    vehicles_router,
     prefix=settings.API_V1_PREFIX,
 )
 

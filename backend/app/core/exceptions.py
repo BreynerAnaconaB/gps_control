@@ -36,7 +36,6 @@ class WialonAuthenticationException(WialonException):
             status_code=502,
         )
 
-
 class WialonUnavailableException(WialonException):
     """Raised when Wialon is unavailable."""
 
@@ -45,4 +44,14 @@ class WialonUnavailableException(WialonException):
             message,
             code="WIALON_UNAVAILABLE",
             status_code=503,
+        )
+
+class WialonAPIException(WialonException):
+    def __init__(self, message: str, api_error_code: int):
+        self.api_error_code = api_error_code
+
+        super().__init__(
+            message=message,
+            code=f"WIALON_API_{api_error_code}",
+            status_code=502,
         )
