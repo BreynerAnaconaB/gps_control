@@ -1,16 +1,45 @@
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
-from fastapi import FastAPI
+from app.api.v1.endpoints.health import router as health_router
+from app.core.config import settings
+from app.core.exceptions import AppException
+
 
 app = FastAPI(
-    title="GPS Control API",
+    title=settings.APP_NAME,
     description="API para la gestión y monitoreo de flotas vehiculares.",
     version="1.0.0",
+    debug=settings.DEBUG,
 )
 
 
-@app.get("/health", tags=["Health"])
-async def health_check():
+@app.exception_handler(AppException)
+async def app_exception_handler(
+    request: Request,
+    exc: AppException,
+):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "type": "about:blank",
+            "title": exc.code,
+            "status": exc.status_code,
+            "detail": exc.message,
+            "code": exc.code,
+        },
+    )
+
+
+app.include_router(
+    health_router,
+    prefix=settings.API_V1_PREFIX,
+)
+
+
+@app.get("/health", tags=["Health"], include_in_schema=False)
+async def root_health_check():
     return {
         "status": "ok",
-        "message": "GPS Control API is running"
+        "application": settings.APP_NAME,
     }
