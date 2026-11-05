@@ -5,6 +5,7 @@ from app.api.v1.endpoints.health import router as health_router
 from app.api.v1.endpoints.vehicles import router as vehicles_router
 from app.core.config import settings
 from app.core.exceptions import AppException
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI(
@@ -14,6 +15,13 @@ app = FastAPI(
     debug=settings.DEBUG,
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.exception_handler(AppException)
 async def app_exception_handler(
