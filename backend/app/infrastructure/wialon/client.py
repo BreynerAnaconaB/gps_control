@@ -44,7 +44,7 @@ class WialonClient:
         except (httpx.HTTPError, ValueError) as exc:
             raise WialonUnavailableException() from exc
 
-        if not isinstance(result, dict):
+        if not isinstance(result, (dict, list)):
             raise WialonUnavailableException(
                 "Invalid response received from Wialon"
             )
@@ -78,7 +78,7 @@ class WialonClient:
 
         result = await self._post(payload)
 
-        if "error" in result:
+        if isinstance(result, dict) and "error" in result:
             error_code = result["error"]
 
             raise WialonAPIException(

@@ -1,0 +1,123 @@
+/* ============================================================
+   Passengers.css — Adaptado al sistema de tokens y temas
+   ============================================================ */
+
+.passengers-content {
+  padding: 1.75rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.passengers-search-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.passenger-avatar {
+  width: 36px;
+  height: 36px;
+  background-color: var(--stat-icon-bg-teal);
+  color: var(--stat-icon-color-teal);
+  border: 1px solid var(--stat-icon-border-teal);
+  font-weight: 700;
+  font-size: 0.8rem;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.custom-fields-pill {
+  background-color: var(--bg-surface-alt);
+  color: var(--brand-teal);
+  border: 1px solid var(--border-default);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
+}
+
+.custom-fields-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  background-color: var(--bg-surface-alt);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+}
+
+.custom-fields-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.custom-fields-header strong {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.btn-add-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--brand-teal);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-add-field:hover {
+  background-color: var(--stat-icon-bg-teal);
+  border-color: var(--brand-teal);
+}
+
+.custom-field-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.custom-field-row input {
+  flex: 1;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--border-default);
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.custom-field-row input:focus {
+  border-color: var(--brand-teal);
+}
+
+.btn-remove-field {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.35rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.btn-remove-field:hover {
+  color: var(--brand-primary);
+  background-color: rgba(235, 22, 44, 0.1);
+}
