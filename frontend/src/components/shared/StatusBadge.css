@@ -1,0 +1,49 @@
+/* StatusBadge.css — Adaptado a tema claro y oscuro */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.7rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.badge-moving {
+  background: var(--stat-icon-bg-teal);
+  color: var(--stat-icon-color-teal);
+  border-color: var(--stat-icon-border-teal);
+}
+
+.badge-stopped {
+  background: var(--stat-icon-bg-orange);
+  color: var(--stat-icon-color-orange);
+  border-color: var(--stat-icon-border-orange);
+}
+
+.badge-no-signal {
+  background: rgba(235, 22, 44, 0.14);
+  color: #f87171;
+  border-color: rgba(235, 22, 44, 0.28);
+}
+
+.badge-active {
+  background: var(--stat-icon-bg-green);
+  color: var(--stat-icon-color-green);
+  border-color: var(--stat-icon-border-green);
+}
+
+.badge-inactive {
+  background: var(--bg-surface-alt);
+  color: var(--text-muted);
+  border-color: var(--border-default);
+}
+
+.badge-default {
+  background: var(--bg-surface-alt);
+  color: var(--text-secondary);
+  border-color: var(--border-default);
+}
