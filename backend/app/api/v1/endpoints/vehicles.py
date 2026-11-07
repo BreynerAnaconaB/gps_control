@@ -3,18 +3,28 @@ from datetime import datetime, timezone
 from math import ceil
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.v1.dependencies import (
     get_vehicle_cache,
+    get_wialon_gateway,
     get_wialon_session_manager,
+    require_permission,
+)
+from app.api.v1.schemas.custom_field import (
+    CustomFieldResponse,
+    CustomFieldUpsert,
 )
 from app.api.v1.schemas.vehicle import (
+    VehicleDetailResponse,
     VehiclePageResponse,
     VehicleResponse,
 )
+from app.core.exceptions import WialonAPIException
+from app.infrastructure.wialon.gateway import WialonGateway
 from app.infrastructure.wialon.session import WialonSessionManager
 from app.services.vehicle_cache import AsyncTTLCache
+from app.services.vehicle_detail import VehicleDetailService
 from app.services.vehicle_status import (
     calculate_vehicle_status,
     heading_to_direction,
@@ -42,6 +52,19 @@ async def load_vehicles_from_wialon(
 
     result = await session_manager.call("core/search_items", params)
 
+    # Mapeo de conductores asignados por vehículo
+    driver_map: dict[int, tuple[int, str]] = {}
+    try:
+        gateway = WialonGateway(session_manager)
+        resource_id = await gateway.get_first_resource_id()
+        drivers = await gateway.get_drivers(resource_id)
+        for d in drivers:
+            bu = d.get("bu")
+            if bu:
+                driver_map[int(bu)] = (int(d["id"]), str(d.get("n", "")))
+    except Exception:
+        pass
+
     vehicles = []
 
     for vehicle in result.get("items", []):
@@ -58,6 +81,8 @@ async def load_vehicles_from_wialon(
         longitude = position.get("x")
         speed = position.get("s")
         heading = position.get("c")
+
+        driver_info = driver_map.get(vehicle["id"])
 
         vehicles.append(
             VehicleResponse(
@@ -77,6 +102,8 @@ async def load_vehicles_from_wialon(
                     last_position=last_position,
                 ),
                 direction=heading_to_direction(heading),
+                assigned_driver_id=driver_info[0] if driver_info else None,
+                assigned_driver_name=driver_info[1] if driver_info else None,
             )
         )
 
@@ -140,3 +167,87 @@ async def get_vehicles(
         page_size=page_size,
         pages=pages,
     )
+
+
+@router.get(
+    "/vehicles/{vehicle_id}",
+    response_model=VehicleDetailResponse,
+    tags=["Vehicles"],
+)
+async def get_vehicle_detail(
+    vehicle_id: int,
+    session_manager: WialonSessionManager = Depends(
+        get_wialon_session_manager
+    ),
+):
+    service = VehicleDetailService(session_manager)
+
+    try:
+        detail = await service.get_vehicle_detail(vehicle_id)
+
+    except WialonAPIException as exc:
+        if exc.api_error_code == 7:
+            raise HTTPException(
+                status_code=404,
+                detail="Vehicle not found",
+            ) from exc
+
+        raise
+
+    if not detail:
+        raise HTTPException(
+            status_code=404,
+            detail="Vehicle not found",
+        )
+
+    return detail
+
+
+@router.patch(
+    "/vehicles/{vehicle_id}/custom-fields",
+    response_model=list[CustomFieldResponse],
+    tags=["Vehicles"],
+    dependencies=[Depends(require_permission("write", "vehicles"))],
+)
+async def upsert_vehicle_custom_fields(
+    vehicle_id: int,
+    fields: list[CustomFieldUpsert],
+    gateway: WialonGateway = Depends(get_wialon_gateway),
+):
+    results = []
+    for f in fields:
+        field_id = f.field_id or 0
+        res = await gateway.update_vehicle_custom_field(
+            unit_id=vehicle_id,
+            field_id=field_id,
+            name=f.name,
+            value=f.value,
+        )
+        # res has structure [id, {n: ..., v: ...}] or dict
+        res_id = res[0] if isinstance(res, (list, tuple)) else res.get("id", field_id)
+        results.append(
+            CustomFieldResponse(
+                field_id=int(res_id) if res_id else field_id,
+                name=f.name,
+                value=f.value,
+            )
+        )
+    return results
+
+
+@router.delete(
+    "/vehicles/{vehicle_id}/custom-fields/{field_id}",
+    status_code=204,
+    tags=["Vehicles"],
+    dependencies=[Depends(require_permission("write", "vehicles"))],
+)
+async def delete_vehicle_custom_field(
+    vehicle_id: int,
+    field_id: int,
+    gateway: WialonGateway = Depends(get_wialon_gateway),
+):
+    await gateway.delete_vehicle_custom_field(
+        unit_id=vehicle_id,
+        field_id=field_id,
+    )
+

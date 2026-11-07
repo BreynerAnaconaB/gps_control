@@ -1,25 +1,66 @@
+import { Link, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard,
   Map,
-  Truck,
   Users,
+  UserCheck,
   History,
-  Settings,
+  ShieldCheck,
+  FileText,
   Radio,
+  LogOut,
 } from 'lucide-react'
-
-const menuItems = [
-  { label: 'Resumen', icon: LayoutDashboard, active: true },
-  { label: 'Monitoreo', icon: Map },
-  { label: 'Vehículos', icon: Truck },
-  { label: 'Conductores', icon: Users },
-  { label: 'Historial', icon: History },
-]
+import { useAuth } from '../context/AuthContext'
 
 export default function Sidebar() {
+  const location = useLocation()
+  const { user, logout, hasPermission } = useAuth()
+
+  const currentPath = location.pathname
+
+  const navItems = [
+    {
+      to: '/app',
+      label: 'Monitoreo',
+      icon: Map,
+      show: true,
+    },
+    {
+      to: '/app/drivers',
+      label: 'Conductores',
+      icon: Users,
+      show: hasPermission('read', 'drivers'),
+    },
+    {
+      to: '/app/passengers',
+      label: 'Pasajeros',
+      icon: UserCheck,
+      show: hasPermission('read', 'passengers'),
+    },
+    {
+      to: '/app/history',
+      label: 'Historial',
+      icon: History,
+      show: hasPermission('read', 'history'),
+    },
+    {
+      to: '/app/users',
+      label: 'Usuarios',
+      icon: ShieldCheck,
+      show: hasPermission('manage', 'users'),
+    },
+    {
+      to: '/app/audit',
+      label: 'Auditoría',
+      icon: FileText,
+      show: hasPermission('read', 'audit'),
+    },
+  ]
+
+  const userInitial = user?.email ? user.email.slice(0, 2).toUpperCase() : 'GC'
+
   return (
     <aside className="sidebar">
-      <div className="brand">
+      <Link to="/" className="brand" style={{ textDecoration: 'none', color: 'inherit' }}>
         <div className="brand-icon">
           <Radio size={22} />
         </div>
@@ -27,35 +68,48 @@ export default function Sidebar() {
           <h2>GPS CONTROL</h2>
           <span>Fleet management</span>
         </div>
-      </div>
+      </Link>
 
       <span className="menu-label">MENÚ PRINCIPAL</span>
 
-      <nav className="sidebar-nav">
-        {menuItems.map(({ label, icon: Icon, active }) => (
-          <button
-            key={label}
-            className={`nav-item ${active ? 'active' : ''}`}
-            type="button"
-          >
-            <Icon size={19} />
-            <span>{label}</span>
-          </button>
-        ))}
+      <nav className="sidebar-nav" aria-label="Navegación del panel">
+        {navItems
+          .filter((item) => item.show)
+          .map(({ to, label, icon: Icon }) => {
+            const isActive = currentPath === to
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={`nav-item ${isActive ? 'active' : ''}`}
+                style={{ textDecoration: 'none' }}
+              >
+                <Icon size={19} />
+                <span>{label}</span>
+              </Link>
+            )
+          })}
       </nav>
 
       <div className="sidebar-bottom">
-        <button className="nav-item" type="button">
-          <Settings size={19} />
-          <span>Configuración</span>
-        </button>
-
         <div className="user-profile">
-          <div className="avatar">BC</div>
-          <div>
-            <strong>Administrador</strong>
-            <span>GPS Control</span>
+          <div className="avatar">{userInitial}</div>
+          <div style={{ overflow: 'hidden' }}>
+            <strong style={{ display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              {user?.email || 'Usuario'}
+            </strong>
+            <span style={{ textTransform: 'capitalize' }}>{user?.role || 'Operador'}</span>
           </div>
+          <button
+            type="button"
+            className="icon-button"
+            onClick={logout}
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
+            style={{ marginLeft: 'auto', background: 'transparent', border: 'none', color: '#6b6b6b' }}
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
     </aside>

@@ -36,6 +36,7 @@ class WialonAuthenticationException(WialonException):
             status_code=502,
         )
 
+
 class WialonUnavailableException(WialonException):
     """Raised when Wialon is unavailable."""
 

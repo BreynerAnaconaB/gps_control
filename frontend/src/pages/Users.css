@@ -1,0 +1,63 @@
+/* ============================================================
+   Users.css — Adaptado al sistema de tokens y temas
+   ============================================================ */
+
+.users-content {
+  padding: 1.75rem 2rem;
+}
+
+.user-table-avatar {
+  width: 36px;
+  height: 36px;
+  background-color: var(--stat-icon-bg-orange);
+  color: var(--stat-icon-color-orange);
+  border: 1px solid var(--stat-icon-border-orange);
+  font-weight: 700;
+  font-size: 0.8rem;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.role-inline-select {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-transform: capitalize;
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.role-inline-select:focus {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(235, 22, 44, 0.15);
+}
+
+.user-status-pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.7rem;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid transparent;
+}
+
+.user-status-pill.active {
+  background-color: var(--stat-icon-bg-green);
+  color: var(--stat-icon-color-green);
+  border-color: var(--stat-icon-border-green);
+}
+
+.user-status-pill.inactive {
+  background-color: rgba(235, 22, 44, 0.12);
+  color: #f87171;
+  border-color: rgba(235, 22, 44, 0.28);
+}

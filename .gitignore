@@ -25,3 +25,7 @@ dist/
 # Testing
 .coverage
 htmlcov/
+
+# Database
+*.db
+*.sqlite3

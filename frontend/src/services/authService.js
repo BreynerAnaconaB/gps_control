@@ -37,7 +37,7 @@ async function apiFetch(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers,
-    credentials: 'include', // send/receive HttpOnly cookies
+    credentials: 'include',
   })
 
   // Auto-refresh on 401
@@ -110,21 +110,6 @@ export async function getMe() {
   return res.json()
 }
 
-function extractError(err, defaultMsg) {
-  if (!err) return defaultMsg
-  if (typeof err.detail === 'string') return err.detail
-  if (Array.isArray(err.detail) && err.detail.length > 0) {
-    const first = err.detail[0]
-    const field = first.loc ? first.loc[first.loc.length - 1] : ''
-    const msg = first.msg || 'Dato inválido'
-    if (msg.includes('valid email')) return 'El correo electrónico no es válido'
-    if (field === 'email') return 'Ingresa un correo electrónico válido (ej. usuario@dominio.com)'
-    if (field === 'password') return 'La contraseña debe tener al menos 8 caracteres'
-    return `${field ? field + ': ' : ''}${msg}`
-  }
-  return err.message || defaultMsg
-}
-
 export async function changePassword(currentPassword, newPassword) {
   const res = await apiFetch('/auth/change-password', {
     method: 'POST',
@@ -135,7 +120,7 @@ export async function changePassword(currentPassword, newPassword) {
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(extractError(err, 'Error al cambiar la contraseña'))
+    throw new Error(err.detail ?? 'Error al cambiar la contraseña')
   }
 }
 
@@ -145,10 +130,7 @@ export async function changePassword(currentPassword, newPassword) {
 
 export async function getUsers() {
   const res = await apiFetch('/auth/users')
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(extractError(err, 'Error al obtener usuarios'))
-  }
+  if (!res.ok) throw new Error('Error al obtener usuarios')
   return res.json()
 }
 
@@ -159,7 +141,7 @@ export async function createUser(email, password, role) {
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(extractError(err, 'Error al crear usuario'))
+    throw new Error(err.detail ?? 'Error al crear usuario')
   }
   return res.json()
 }
@@ -171,7 +153,7 @@ export async function updateUser(userId, payload) {
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(extractError(err, 'Error al actualizar usuario'))
+    throw new Error(err.detail ?? 'Error al actualizar usuario')
   }
   return res.json()
 }

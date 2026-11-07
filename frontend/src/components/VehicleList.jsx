@@ -1,5 +1,5 @@
 
-import { Search, Truck, Gauge, Compass, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Truck, Gauge, Compass, ChevronLeft, ChevronRight, UserCheck } from 'lucide-react'
 
 const statusLabels = {
   moving: 'En movimiento',
@@ -79,6 +79,19 @@ export default function VehicleList({
                   {vehicle.direction}
                 </small>
               )}
+
+              <div className="vehicle-driver-badge">
+                {vehicle.assigned_driver_name ? (
+                  <span className="driver-pill assigned" title={`Conductor: ${vehicle.assigned_driver_name}`}>
+                    <UserCheck size={11} />
+                    {vehicle.assigned_driver_name}
+                  </span>
+                ) : (
+                  <span className="driver-pill unassigned">
+                    Sin conductor
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="vehicle-speed">

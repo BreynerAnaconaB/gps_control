@@ -127,6 +127,11 @@ export default function FleetMap({
               <Popup>
                 <strong>{vehicle.name}</strong>
                 <br />
+                <strong>Conductor:</strong>{' '}
+                {vehicle.assigned_driver_name
+                  ? `👤 ${vehicle.assigned_driver_name}`
+                  : '❌ Sin conductor vinculado'}
+                <br />
                 Estado: {statusLabels[vehicle.status] || 'Desconocido'}
                 <br />
                 Velocidad: {vehicle.speed ?? 0} km/h

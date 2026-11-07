@@ -1,5 +1,8 @@
+/**
+ * vehicleService.js — Consulta y gestión de vehículos y campos personalizados.
+ */
 
-const API_URL = 'http://localhost:8000/api/v1'
+import { apiGet, apiPatch, apiDelete } from './apiClient'
 
 export async function getVehicles({
   page = 1,
@@ -20,15 +23,7 @@ export async function getVehicles({
     params.set('status', status)
   }
 
-  const response = await fetch(
-    `${API_URL}/vehicles?${params.toString()}`
-  )
-
-  if (!response.ok) {
-    throw new Error(`Error al consultar vehículos: ${response.status}`)
-  }
-
-  return response.json()
+  return apiGet(`/vehicles?${params.toString()}`)
 }
 
 export async function getAllVehicles() {
@@ -37,5 +32,27 @@ export async function getAllVehicles() {
     pageSize: 100,
   })
 
-  return data.items
+  return data.items || []
+}
+
+export async function getVehicleDetail(vehicleId) {
+  return apiGet(`/vehicles/${vehicleId}`)
+}
+
+/**
+ * Crea o actualiza campos personalizados de un vehículo.
+ * @param {number|string} vehicleId
+ * @param {Array<{ field_id?: number, name: string, value: string }>} fields
+ */
+export async function updateVehicleCustomFields(vehicleId, fields) {
+  return apiPatch(`/vehicles/${vehicleId}/custom-fields`, fields)
+}
+
+/**
+ * Elimina un campo personalizado de un vehículo.
+ * @param {number|string} vehicleId
+ * @param {number} fieldId
+ */
+export async function deleteVehicleCustomField(vehicleId, fieldId) {
+  return apiDelete(`/vehicles/${vehicleId}/custom-fields/${fieldId}`)
 }
