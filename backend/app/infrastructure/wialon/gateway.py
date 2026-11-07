@@ -163,6 +163,7 @@ class WialonGateway:
             {
                 "resourceId": resource_id,
                 "unitId": unit_id,
+                "itemId": unit_id,
                 "driverId": driver_id,
                 "time": 0,
                 "mode": 1,
@@ -178,6 +179,7 @@ class WialonGateway:
             {
                 "resourceId": resource_id,
                 "unitId": unit_id,
+                "itemId": unit_id,
                 "driverId": 0,
                 "time": 0,
                 "mode": 0,

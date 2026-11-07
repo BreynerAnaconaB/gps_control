@@ -35,8 +35,45 @@ export function clearAccessToken() {
 }
 
 // ---------------------------------------------------------------------------
-// Base fetch with auto-refresh
+// Base fetch with auto-refresh and deduplicated refresh promise
 // ---------------------------------------------------------------------------
+
+let _refreshPromise = null
+
+export async function refreshSession() {
+  if (_refreshPromise) {
+    return _refreshPromise
+  }
+
+  _refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_URL}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        clearAccessToken()
+        return null
+      }
+      const data = await res.json()
+      if (data?.access_token) {
+        setAccessToken(data.access_token)
+      }
+      if (data?.user) {
+        try {
+          sessionStorage.setItem('auth_user', JSON.stringify(data.user))
+        } catch {}
+      }
+      return data
+    } catch {
+      return null
+    } finally {
+      _refreshPromise = null
+    }
+  })()
+
+  return _refreshPromise
+}
 
 async function apiFetch(path, options = {}) {
   const headers = {
@@ -55,14 +92,11 @@ async function apiFetch(path, options = {}) {
     credentials: 'include',
   })
 
-  // Auto-refresh on 401
-  if (response.status === 401 && path !== '/auth/refresh' && path !== '/auth/login') {
-    const refreshed = await tryRefresh()
-    if (refreshed) {
-      const newToken = getAccessToken()
-      if (newToken) {
-        headers['Authorization'] = `Bearer ${newToken}`
-      }
+  // Auto-refresh on 401 (evita bucles en login y refresh)
+  if (response.status === 401 && path !== '/auth/refresh' && path !== '/auth/login' && !options._isRetry) {
+    const refreshed = await refreshSession()
+    if (refreshed?.access_token) {
+      headers['Authorization'] = `Bearer ${refreshed.access_token}`
       return fetch(`${API_URL}${path}`, {
         ...options,
         headers,
@@ -72,21 +106,6 @@ async function apiFetch(path, options = {}) {
   }
 
   return response
-}
-
-async function tryRefresh() {
-  try {
-    const res = await fetch(`${API_URL}/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include',
-    })
-    if (!res.ok) return false
-    const data = await res.json()
-    setAccessToken(data.access_token)
-    return true
-  } catch {
-    return false
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -117,13 +136,6 @@ export async function logout() {
   clearAccessToken()
 }
 
-export async function refreshSession() {
-  const res = await apiFetch('/auth/refresh', { method: 'POST' })
-  if (!res.ok) return null
-  const data = await res.json()
-  setAccessToken(data.access_token)
-  return data
-}
 
 export async function getMe() {
   const res = await apiFetch('/auth/me')

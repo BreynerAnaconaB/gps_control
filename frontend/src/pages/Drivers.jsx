@@ -173,8 +173,25 @@ export default function Drivers() {
   async function handleBindSubmit(e) {
     e.preventDefault()
     if (!bindTargetDriver) return
+    const targetUnitId = selectedUnitId ? Number(selectedUnitId) : null
+    const prevDrivers = drivers
+
     try {
       setBindSubmitting(true)
+
+      // Actualización optimista inmediata en la UI
+      setDrivers((prev) =>
+        prev.map((d) => {
+          if (d.id === bindTargetDriver.id) {
+            return { ...d, assigned_unit_id: targetUnitId }
+          }
+          if (targetUnitId && d.assigned_unit_id === targetUnitId) {
+            return { ...d, assigned_unit_id: null }
+          }
+          return d
+        })
+      )
+
       if (selectedUnitId) {
         await bindDriver(bindTargetDriver.id, selectedUnitId)
         toast('success', 'Conductor asignado al vehículo en Wialon')
@@ -183,8 +200,13 @@ export default function Drivers() {
         toast('success', 'Conductor desvinculado de la unidad')
       }
       setBindModalOpen(false)
-      loadDrivers()
+
+      // Sincronización en segundo plano con tolerancia a la replicación de Wialon
+      setTimeout(() => {
+        loadDrivers()
+      }, 1000)
     } catch (err) {
+      setDrivers(prevDrivers)
       toast('error', err.message || 'Error al vincular conductor')
     } finally {
       setBindSubmitting(false)

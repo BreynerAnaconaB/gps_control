@@ -3,7 +3,7 @@
  * renovación de token y manejo de arranque en frío (DEP-04) con backoff exponencial.
  */
 
-import { getAccessToken } from './authService'
+import { getAccessToken, refreshSession } from './authService'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
 
@@ -85,6 +85,21 @@ async function baseFetch(path, options = {}) {
       notifyColdStart({ isColdStarting: false })
 
       if (!res.ok) {
+        // Auto-refresh transparente en 401 (ej. expiración de access token tras 15 min)
+        if (res.status === 401 && !options._isRetry) {
+          const refreshed = await refreshSession()
+          if (refreshed?.access_token) {
+            return baseFetch(path, {
+              ...options,
+              _isRetry: true,
+            })
+          } else {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('auth:session-expired'))
+            }
+          }
+        }
+
         const text = await res.text().catch(() => '')
         let err = {}
         try {

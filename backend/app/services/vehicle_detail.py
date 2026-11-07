@@ -63,7 +63,8 @@ class VehicleDetailService:
             # Conductor asignado
             drivers = await self.gateway.get_drivers(resource_id)
             for d in drivers:
-                if d.get("bu") == vehicle_id:
+                bu = d.get("bu")
+                if bu is not None and str(bu) != "0" and int(bu) == int(vehicle_id):
                     assigned_driver = {
                         "id": d["id"],
                         "name": d.get("n", ""),
@@ -75,7 +76,8 @@ class VehicleDetailService:
             # Pasajeros asignados
             passengers = await self.gateway.get_passengers(resource_id)
             for p in passengers:
-                if p.get("bu") == vehicle_id:
+                bu = p.get("bu")
+                if bu is not None and str(bu) != "0" and int(bu) == int(vehicle_id):
                     assigned_passengers.append(
                         {
                             "id": p["id"],

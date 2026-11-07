@@ -55,6 +55,15 @@ export function AuthProvider({ children }) {
     restoreSession()
   }, [])
 
+  // Auto-cierre de sesión si la rotación/renovación falla definitivamente
+  useEffect(() => {
+    function handleSessionExpired() {
+      setUser(null)
+    }
+    window.addEventListener('auth:session-expired', handleSessionExpired)
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired)
+  }, [])
+
   const login = useCallback(async (email, password) => {
     const data = await apiLogin(email, password)
     setUser(data.user)

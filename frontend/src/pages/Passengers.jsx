@@ -200,8 +200,22 @@ export default function Passengers() {
   async function handleBindSubmit(e) {
     e.preventDefault()
     if (!bindTarget) return
+    const targetUnitId = selectedUnitId ? Number(selectedUnitId) : null
+    const prevPassengers = passengers
+
     try {
       setBindSubmitting(true)
+
+      // Actualización optimista inmediata en la UI
+      setPassengers((prev) =>
+        prev.map((p) => {
+          if (p.id === bindTarget.id) {
+            return { ...p, assigned_unit_id: targetUnitId }
+          }
+          return p
+        })
+      )
+
       if (selectedUnitId) {
         await bindPassenger(bindTarget.id, selectedUnitId)
         toast('success', 'Pasajero asignado al vehículo en Wialon')
@@ -210,8 +224,13 @@ export default function Passengers() {
         toast('success', 'Pasajero desvinculado del vehículo')
       }
       setBindModalOpen(false)
-      loadPassengers()
+
+      // Sincronización en segundo plano con tolerancia a la replicación de Wialon
+      setTimeout(() => {
+        loadPassengers()
+      }, 1000)
     } catch (err) {
+      setPassengers(prevPassengers)
       toast('error', err.message || 'Error al vincular pasajero')
     } finally {
       setBindSubmitting(false)
