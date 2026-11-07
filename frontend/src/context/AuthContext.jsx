@@ -32,14 +32,24 @@ export function AuthProvider({ children }) {
     async function restoreSession() {
       try {
         const data = await refreshSession()
-        if (data) {
+        if (data?.user) {
           setUser(data.user)
+          setLoading(false)
+          return
         }
       } catch {
-        // No valid refresh token — user needs to log in
-      } finally {
-        setLoading(false)
+        // No valid refresh token o cookie bloqueada por política cross-site
       }
+
+      // Fallback: restaurar sesión guardada para persistir en recargas de página
+      try {
+        const savedUser = sessionStorage.getItem('auth_user')
+        if (savedUser) {
+          setUser(JSON.parse(savedUser))
+        }
+      } catch {}
+
+      setLoading(false)
     }
 
     restoreSession()

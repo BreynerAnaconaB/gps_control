@@ -91,21 +91,26 @@ class UserResponse(BaseModel):
 
 
 def _set_refresh_cookie(response: Response, raw_token: str) -> None:
+    # Cross-site (frontend en vercel.app, backend en railway.app) requiere samesite="none" y secure=True
+    samesite = "none" if not settings.DEBUG else "lax"
     response.set_cookie(
         key=COOKIE_NAME,
         value=raw_token,
         httponly=True,
         secure=True,
-        samesite="strict",
+        samesite=samesite,
         max_age=COOKIE_MAX_AGE,
-        path="/api/v1/auth",
+        path="/",
     )
 
 
 def _clear_refresh_cookie(response: Response) -> None:
+    samesite = "none" if not settings.DEBUG else "lax"
     response.delete_cookie(
         key=COOKIE_NAME,
-        path="/api/v1/auth",
+        path="/",
+        secure=True,
+        samesite=samesite,
     )
 
 

@@ -10,14 +10,28 @@ let _accessToken = null
 
 export function setAccessToken(token) {
   _accessToken = token
+  if (token) {
+    try {
+      sessionStorage.setItem('access_token', token)
+    } catch {}
+  }
 }
 
 export function getAccessToken() {
-  return _accessToken
+  if (_accessToken) return _accessToken
+  try {
+    return sessionStorage.getItem('access_token')
+  } catch {
+    return null
+  }
 }
 
 export function clearAccessToken() {
   _accessToken = null
+  try {
+    sessionStorage.removeItem('access_token')
+    sessionStorage.removeItem('auth_user')
+  } catch {}
 }
 
 // ---------------------------------------------------------------------------
@@ -88,6 +102,9 @@ export async function login(email, password) {
 
   const data = await response.json()
   setAccessToken(data.access_token)
+  try {
+    sessionStorage.setItem('auth_user', JSON.stringify(data.user))
+  } catch {}
   return data
 }
 
