@@ -1,0 +1,16 @@
+/* ActivityChart.css */
+.activity-chart {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0.5rem 0;
+}
+
+.activity-chart-empty {
+  padding: 2.5rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  justify-content: center;
+  font-style: italic;
+}
