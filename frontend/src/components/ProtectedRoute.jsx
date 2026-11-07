@@ -25,6 +25,11 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
+  // RF-06: Forzar cambio de contraseña en primer login
+  if (user.must_change_password && location.pathname !== '/app/change-password') {
+    return <Navigate to="/app/change-password" replace />
+  }
+
   return children
 }
 
