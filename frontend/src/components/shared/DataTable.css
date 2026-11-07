@@ -21,7 +21,7 @@
   border-collapse: collapse;
   font-size: 0.875rem;
   color: var(--text-primary);
-  min-width: 480px;
+  min-width: 620px;
 }
 
 .data-table thead tr {

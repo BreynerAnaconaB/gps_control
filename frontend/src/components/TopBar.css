@@ -173,16 +173,77 @@
   gap: 0.5rem;
 }
 
+.topbar-hamburger-btn {
+  display: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background-color: var(--btn-icon-bg);
+  border: 1px solid var(--btn-icon-border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.topbar-hamburger-btn:hover {
+  background-color: var(--btn-icon-hover-bg);
+  border-color: var(--btn-icon-hover-border);
+  color: var(--brand-primary);
+}
+
+.topbar-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 @media (max-width: 768px) {
   .topbar {
     padding: 0.75rem 1rem;
-    gap: 0.75rem;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+    min-height: 64px;
+  }
+  .topbar-left {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+    flex: 1;
+  }
+  .topbar-hamburger-btn {
+    display: grid;
+  }
+  .topbar-breadcrumb {
+    display: none;
   }
   .topbar-title {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .user-email {
-    max-width: 100px;
+  .topbar-right {
+    gap: 0.35rem;
+    flex-wrap: nowrap;
+  }
+  .connection-text {
+    display: none;
+  }
+  .connection-pill {
+    padding: 6px;
+    border-radius: var(--radius-full);
+  }
+  .topbar-user-badge {
+    display: none;
+  }
+  .topbar-icon-btn {
+    width: 36px;
+    height: 36px;
   }
 }
 

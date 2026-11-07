@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
 
@@ -9,9 +10,11 @@ export default function AppLayout({
   isRefreshing = false,
   children,
 }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   return (
     <div className="app-layout">
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="main-layout-container">
         <TopBar
           title={title}
@@ -19,6 +22,8 @@ export default function AppLayout({
           actions={actions}
           onRefresh={onRefresh}
           isRefreshing={isRefreshing}
+          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+          isSidebarOpen={sidebarOpen}
         />
         <main className="main-page-body">
           {children}

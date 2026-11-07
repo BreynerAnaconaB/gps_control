@@ -1,4 +1,4 @@
-import { Moon, Sun, RefreshCw, Bell, LogOut } from 'lucide-react'
+import { Moon, Sun, RefreshCw, Bell, LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import './TopBar.css'
@@ -9,6 +9,8 @@ export default function TopBar({
   actions = null,
   onRefresh = null,
   isRefreshing = false,
+  onToggleSidebar = null,
+  isSidebarOpen = false,
 }) {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
@@ -24,8 +26,21 @@ export default function TopBar({
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <span className="topbar-breadcrumb">{breadcrumb}</span>
-        <h1 className="topbar-title">{title}</h1>
+        {onToggleSidebar && (
+          <button
+            type="button"
+            className="topbar-hamburger-btn"
+            onClick={onToggleSidebar}
+            aria-label={isSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
+            title="Menú de navegación"
+          >
+            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        )}
+        <div className="topbar-heading">
+          <span className="topbar-breadcrumb">{breadcrumb}</span>
+          <h1 className="topbar-title">{title}</h1>
+        </div>
       </div>
 
       <div className="topbar-right">
