@@ -1,5 +1,6 @@
 
 import logging
+import logging.config as _logging_config
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -20,6 +21,36 @@ from app.api.v1.endpoints.vehicles import router as vehicles_router
 from app.core.config import settings
 from app.core.exceptions import AppException
 
+# ---------------------------------------------------------------------------
+# Structured logging setup (ARQ-07)
+# ---------------------------------------------------------------------------
+_LOGGING_CONFIG = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "structured": {
+            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            "datefmt": "%Y-%m-%dT%H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "structured",
+            "stream": "ext://sys.stdout",
+        },
+    },
+    "root": {
+        "level": "INFO",
+        "handlers": ["console"],
+    },
+    "loggers": {
+        "uvicorn.access": {"level": "WARNING"},
+        "sqlalchemy.engine": {"level": "WARNING"},
+    },
+}
+
+_logging_config.dictConfig(_LOGGING_CONFIG)
 logger = logging.getLogger(__name__)
 
 

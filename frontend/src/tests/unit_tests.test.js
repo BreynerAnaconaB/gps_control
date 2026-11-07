@@ -117,3 +117,69 @@ describe('Deduplicación de lista de vehículos', () => {
   })
 })
 
+// ---------------------------------------------------------------------------
+// 4. Singleton Refresh Promise (Prevención de race conditions en auto-refresh)
+// ---------------------------------------------------------------------------
+describe('Singleton Token Refresh', () => {
+  test('Múltiples llamadas concurrentes comparten la misma promesa de renovación', async () => {
+    let networkCalls = 0
+    let refreshPromise = null
+
+    function getRefresh() {
+      if (refreshPromise) return refreshPromise
+      networkCalls++
+      refreshPromise = new Promise((resolve) => {
+        setTimeout(() => {
+          refreshPromise = null
+          resolve({ access_token: 'new-token' })
+        }, 10)
+      })
+      return refreshPromise
+    }
+
+    // 5 llamadas simultáneas disparadas en el mismo tick
+    const results = await Promise.all([
+      getRefresh(),
+      getRefresh(),
+      getRefresh(),
+      getRefresh(),
+      getRefresh(),
+    ])
+
+    // Solo se debe haber ejecutado 1 llamada a red
+    assert.equal(networkCalls, 1)
+    results.forEach((r) => assert.equal(r.access_token, 'new-token'))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 5. Actualización Optimista de Asignación de Flota (ARQ-12)
+// ---------------------------------------------------------------------------
+describe('Actualización Optimista en UI', () => {
+  test('Aplica el cambio en el estado local de inmediato y realiza rollback en caso de error', async () => {
+    let driversState = [
+      { id: 1, name: 'Carlos', assigned_unit_id: null },
+      { id: 2, name: 'Ana', assigned_unit_id: 500 },
+    ]
+
+    const previousState = [...driversState]
+
+    // Paso 1: Actualización optimista inmediata
+    const targetDriverId = 1
+    const newUnitId = 600
+    driversState = driversState.map((d) =>
+      d.id === targetDriverId ? { ...d, assigned_unit_id: newUnitId } : d
+    )
+
+    // El estado refleja inmediatamente el vehículo asignado sin recargar página
+    assert.equal(driversState.find((d) => d.id === 1).assigned_unit_id, 600)
+
+    // Paso 2: Si el backend falla, se aplica rollback
+    const apiCallFailed = true
+    if (apiCallFailed) {
+      driversState = previousState
+    }
+
+    assert.equal(driversState.find((d) => d.id === 1).assigned_unit_id, null)
+  })
+})

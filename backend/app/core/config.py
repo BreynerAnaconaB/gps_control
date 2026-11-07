@@ -1,9 +1,12 @@
-
 from pathlib import Path
+from typing import Any
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
+
+_INSECURE_DEFAULT_KEY = "change_me_in_production_use_openssl_rand_hex_32"
 
 
 class Settings(BaseSettings):
@@ -20,7 +23,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite+aiosqlite:///./gpscontrol.db"
 
     # JWT
-    SECRET_KEY: str = "change_me_in_production_use_openssl_rand_hex_32"
+    SECRET_KEY: str = _INSECURE_DEFAULT_KEY
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
@@ -36,6 +39,22 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self) -> "Settings":
+        """Fail fast in production if critical settings use insecure defaults (ARQ-05)."""
+        if self.APP_ENV == "production":
+            if self.SECRET_KEY == _INSECURE_DEFAULT_KEY:
+                raise ValueError(
+                    "SECRET_KEY must be set to a secure random value in production. "
+                    "Generate one with: openssl rand -hex 32"
+                )
+            if not self.WIALON_TOKEN:
+                import logging
+                logging.getLogger(__name__).warning(
+                    "WIALON_TOKEN is not set — Wialon integration will be unavailable."
+                )
+        return self
 
     @property
     def cors_origins_list(self) -> list[str]:

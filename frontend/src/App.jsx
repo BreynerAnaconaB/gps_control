@@ -165,7 +165,7 @@ function Dashboard() {
   // Initial load and on filter/page change
   useEffect(() => {
     loadVehicles(vehicles.length === 0)
-  }, [loadVehicles])
+  }, [loadVehicles, vehicles.length])
 
   // Polling every 30 s — pause when tab is hidden (RF-14), immediate refresh on tab reactivation
   useEffect(() => {

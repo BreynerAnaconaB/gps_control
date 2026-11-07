@@ -66,10 +66,9 @@ export default function History() {
   const [vehicles, setVehicles] = useState([])
   const [selectedVehicleId, setSelectedVehicleId] = useState('')
 
-  // Fechas: por defecto el día de hoy
-  const todayStr = new Date().toISOString().split('T')[0]
-  const [fromDate, setFromDate] = useState(todayStr)
-  const [toDate, setToDate] = useState(todayStr)
+  // Fechas: por defecto el día de hoy inicializado perezosamente
+  const [fromDate, setFromDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [toDate, setToDate] = useState(() => new Date().toISOString().split('T')[0])
 
   const [historyData, setHistoryData] = useState(null)
   const [loading, setLoading] = useState(false)

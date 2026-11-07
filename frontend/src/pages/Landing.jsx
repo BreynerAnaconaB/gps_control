@@ -80,6 +80,8 @@ const steps = [
 // Component
 // ---------------------------------------------------------------------------
 
+const CURRENT_YEAR = new Date().getFullYear()
+
 export default function Landing() {
   const { user } = useAuth()
 
@@ -288,7 +290,7 @@ export default function Landing() {
             <span>GPS Control</span>
           </div>
 
-          <p>© {new Date().getFullYear()} GPS Control. Plataforma de monitoreo de flotas.</p>
+          <p>© {CURRENT_YEAR} GPS Control. Plataforma de monitoreo de flotas.</p>
 
           <nav aria-label="Navegación del pie de página">
             <Link to="/login">Iniciar sesión</Link>

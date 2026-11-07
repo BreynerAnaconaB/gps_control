@@ -29,15 +29,6 @@ import {
 import { getAllVehicles } from '../services/vehicleService'
 import './Drivers.css'
 
-const STATUS_LABELS = {
-  moving: 'En movimiento',
-  stopped: 'Detenido',
-  no_signal: 'Sin señal',
-}
-
-function formatStatus(status) {
-  return STATUS_LABELS[status] || status || ''
-}
 
 export default function Drivers() {
   const { toasts, push: toast, remove: removeToast } = useToast()
