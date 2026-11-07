@@ -26,13 +26,43 @@ export async function getVehicles({
   return apiGet(`/vehicles?${params.toString()}`)
 }
 
+/**
+ * Obtiene todos los vehículos de la flota navegando todas las páginas si total > 100.
+ * Garantiza que el mapa y los KPIs representen el 100% de la flota sin duplicados.
+ */
 export async function getAllVehicles() {
-  const data = await getVehicles({
+  const firstPage = await getVehicles({
     page: 1,
     pageSize: 100,
   })
 
-  return data.items || []
+  const allItems = [...(firstPage.items || [])]
+  const totalPages = firstPage.pages || 1
+
+  if (totalPages > 1) {
+    const pagePromises = []
+    for (let p = 2; p <= totalPages; p++) {
+      pagePromises.push(getVehicles({ page: p, pageSize: 100 }))
+    }
+    const remainingPages = await Promise.all(pagePromises)
+    for (const res of remainingPages) {
+      if (res?.items) {
+        allItems.push(...res.items)
+      }
+    }
+  }
+
+  // Deduplicar por id para evitar duplicados en actualizaciones concurrentes
+  const seen = new Set()
+  const uniqueVehicles = []
+  for (const vehicle of allItems) {
+    if (vehicle && !seen.has(vehicle.id)) {
+      seen.add(vehicle.id)
+      uniqueVehicles.push(vehicle)
+    }
+  }
+
+  return uniqueVehicles
 }
 
 export async function getVehicleDetail(vehicleId) {

@@ -85,12 +85,20 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+ALLOWED_ORIGINS = [
+    "https://gps-control-pi.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+for _origin in settings.cors_origins_list:
+    if _origin and _origin not in ALLOWED_ORIGINS:
+        ALLOWED_ORIGINS.append(_origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 

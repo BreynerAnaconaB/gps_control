@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
-import { Clock3, Download, ServerCrash, Search, MapPin, ExternalLink, UserCheck, UserX } from 'lucide-react'
+import { Clock3, Download, ServerCrash } from 'lucide-react'
 
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
@@ -167,14 +167,25 @@ function Dashboard() {
     loadVehicles(vehicles.length === 0)
   }, [loadVehicles])
 
-  // Polling every 30 s — pause when tab is hidden (RF-14)
+  // Polling every 30 s — pause when tab is hidden (RF-14), immediate refresh on tab reactivation
   useEffect(() => {
     const interval = setInterval(() => {
       if (!document.hidden) {
         loadVehicles(false)
       }
     }, 30000)
-    return () => clearInterval(interval)
+
+    function handleVisibility() {
+      if (!document.hidden) {
+        loadVehicles(false)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [loadVehicles])
 
   const handleSearch = (value) => {

@@ -124,6 +124,7 @@ async def get_cached_vehicles(
     "/vehicles",
     response_model=VehiclePageResponse,
     tags=["Vehicles"],
+    dependencies=[Depends(require_permission("read", "vehicles"))],
 )
 async def get_vehicles(
     page: int = Query(1, ge=1),
@@ -173,6 +174,7 @@ async def get_vehicles(
     "/vehicles/{vehicle_id}",
     response_model=VehicleDetailResponse,
     tags=["Vehicles"],
+    dependencies=[Depends(require_permission("read", "vehicles"))],
 )
 async def get_vehicle_detail(
     vehicle_id: int,

@@ -44,8 +44,9 @@ async function apiFetch(path, options = {}) {
     ...(options.headers ?? {}),
   }
 
-  if (_accessToken) {
-    headers['Authorization'] = `Bearer ${_accessToken}`
+  const token = getAccessToken()
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   const response = await fetch(`${API_URL}${path}`, {
@@ -58,7 +59,10 @@ async function apiFetch(path, options = {}) {
   if (response.status === 401 && path !== '/auth/refresh' && path !== '/auth/login') {
     const refreshed = await tryRefresh()
     if (refreshed) {
-      headers['Authorization'] = `Bearer ${_accessToken}`
+      const newToken = getAccessToken()
+      if (newToken) {
+        headers['Authorization'] = `Bearer ${newToken}`
+      }
       return fetch(`${API_URL}${path}`, {
         ...options,
         headers,

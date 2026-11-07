@@ -121,7 +121,7 @@ export default function Landing() {
         <div className="landing-hero-content">
           <div className="landing-hero-badge">
             <span className="live-dot" aria-hidden="true" />
-            Conectado con Wialon · Datos en tiempo real
+            Integración nativa con Wialon API · Monitoreo de flotas
           </div>
 
           <h1 id="hero-heading">
@@ -155,9 +155,9 @@ export default function Landing() {
 
           <ul className="hero-bullets" aria-label="Características destacadas">
             {[
-              'Mapa con clustering en tiempo real',
-              'RBAC con 3 roles',
-              'Exportación CSV',
+              'Mapa interactivo con telemetría en vivo',
+              'Control de acceso RBAC con 3 roles',
+              'Auditoría y exportación a CSV',
             ].map((text) => (
               <li key={text}>
                 <CheckCircle2 size={16} aria-hidden="true" />
@@ -177,19 +177,19 @@ export default function Landing() {
             </div>
             <div className="mock-body">
               <div className="mock-sidebar">
-                {['Resumen', 'Monitoreo', 'Vehículos', 'Conductores'].map((item) => (
+                {['Monitoreo', 'Conductores', 'Pasajeros', 'Historial'].map((item) => (
                   <div key={item} className="mock-menu-item">{item}</div>
                 ))}
               </div>
               <div className="mock-main">
                 <div className="mock-stats">
-                  {['24 vehículos', '18 en movimiento', '4 detenidos', '2 sin señal'].map((s) => (
+                  {['Monitoreo en vivo', 'Telemetría GPS', 'Control de rutas', 'Sensores activos'].map((s) => (
                     <div key={s} className="mock-stat">{s}</div>
                   ))}
                 </div>
                 <div className="mock-map">
                   <Globe size={48} strokeWidth={1} />
-                  <span>Mapa en vivo</span>
+                  <span>Vista interactiva de flota</span>
                 </div>
               </div>
             </div>
