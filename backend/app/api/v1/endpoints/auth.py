@@ -26,6 +26,7 @@ from app.api.v1.dependencies import (
     get_db,
     require_permission,
 )
+from app.core.config import settings
 from app.infrastructure.database.models import RoleName, User
 from app.services.auth_service import AuthService
 
