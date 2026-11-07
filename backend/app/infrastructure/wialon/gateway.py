@@ -223,7 +223,8 @@ class WialonGateway:
 
         Cada dict tiene: id, n (name), c (code), jp (custom_params dict).
         """
-        item = await self._get_resource(resource_id, flags=1 | 512)
+        # Flag 0x200000 (2097152) es el flag oficial de Wialon para tags/pasajeros
+        item = await self._get_resource(resource_id, flags=1 | 0x200000)
         tags_raw: dict = item.get("tags", {})
         result = []
         for tag in tags_raw.values():
