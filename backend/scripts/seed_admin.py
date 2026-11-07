@@ -123,7 +123,9 @@ async def seed(db: AsyncSession) -> None:
             db.add(admin_user)
             logger.info("Created admin user: %s", admin_email)
         else:
-            logger.info("Admin user already exists: %s", admin_email)
+            existing.password_hash = hash_password(admin_password)
+            existing.is_active = True
+            logger.info("Admin user password synchronized with environment: %s", admin_email)
 
     await db.commit()
     logger.info("Seed completed successfully.")

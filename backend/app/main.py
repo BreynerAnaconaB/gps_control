@@ -103,13 +103,21 @@ app.add_middleware(
 )
 
 # ---------------------------------------------------------------------------
-# Exception handlers
+# Exception handlers (with CORS headers guaranteed on errors)
 # ---------------------------------------------------------------------------
+
+def _cors_headers_for_request(request: Request) -> dict[str, str]:
+    origin = request.headers.get("origin")
+    if origin and (origin in ALLOWED_ORIGINS or any(origin == o for o in settings.cors_origins_list)):
+        return {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+        }
+    return {}
 
 
 @app.exception_handler(AppException)
 async def app_exception_handler(request: Request, exc: AppException):
-    # Never expose internal details to the client (SEG-10)
     return JSONResponse(
         status_code=exc.status_code,
         content={
@@ -119,21 +127,24 @@ async def app_exception_handler(request: Request, exc: AppException):
             "detail": exc.message,
             "code": exc.code,
         },
+        headers=_cors_headers_for_request(request),
     )
 
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
     logger.exception("Unhandled exception: %s", exc)
+    error_detail = str(exc) if settings.DEBUG else f"Error interno: {str(exc)}"
     return JSONResponse(
         status_code=500,
         content={
             "type": "about:blank",
             "title": "INTERNAL_SERVER_ERROR",
             "status": 500,
-            "detail": "Ha ocurrido un error interno. Por favor intente más tarde.",
+            "detail": error_detail,
             "code": "INTERNAL_SERVER_ERROR",
         },
+        headers=_cors_headers_for_request(request),
     )
 
 

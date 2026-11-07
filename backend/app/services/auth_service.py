@@ -113,13 +113,14 @@ class AuthService:
         detail: str | None = None,
         ip_address: str | None = None,
     ) -> None:
+        safe_ip = (ip_address.strip()[:45]) if ip_address else None
         log = AuditLog(
             user_id=user_id,
             action=action,
             resource=resource,
             resource_id=resource_id,
             detail=detail,
-            ip_address=ip_address,
+            ip_address=safe_ip,
         )
         self.db.add(log)
         # Flushed with the outer transaction commit
