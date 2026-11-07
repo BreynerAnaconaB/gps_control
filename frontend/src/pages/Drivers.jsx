@@ -198,6 +198,8 @@ export default function Drivers() {
       } else if (bindTargetDriver.assigned_unit_id) {
         await unbindDriver(bindTargetDriver.id, bindTargetDriver.assigned_unit_id)
         toast('success', 'Conductor desvinculado de la unidad')
+      } else {
+        toast('info', 'El conductor ya no tenía vehículo asignado')
       }
       setBindModalOpen(false)
 
@@ -436,11 +438,17 @@ export default function Drivers() {
                 disabled={bindSubmitting}
               >
                 <option value="">-- Sin vehículo (Desvincular) --</option>
-                {vehicles.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}{v.plate && v.plate !== v.name ? ` (${v.plate})` : ''} — {formatStatus(v.status)}
-                  </option>
-                ))}
+                {vehicles.map((v) => {
+                  const currentDriver = drivers.find(
+                    (d) => d.assigned_unit_id === v.id && d.id !== bindTargetDriver?.id
+                  )
+                  return (
+                    <option key={v.id} value={v.id}>
+                      {v.name}{v.plate && v.plate !== v.name ? ` (${v.plate})` : ''}
+                      {currentDriver ? ` — ⚠️ Asignado a: ${currentDriver.name}` : ''}
+                    </option>
+                  )
+                })}
               </select>
             </div>
 

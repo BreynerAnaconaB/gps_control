@@ -11,7 +11,9 @@ Responsabilidades:
 
 from __future__ import annotations
 
+import json
 import math
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,9 +28,17 @@ from app.infrastructure.database.models import AuditLog
 from app.infrastructure.wialon.gateway import WialonGateway
 
 
-def _map_passenger(raw: dict, bindings: dict[int, int]) -> PassengerResponse:
+def _map_passenger(raw: Any, bindings: dict[int, int]) -> PassengerResponse:
     """Convierte un tag crudo de Wialon a PassengerResponse."""
-    passenger_id = int(raw["id"])
+    if isinstance(raw, list):
+        for elem in raw:
+            if isinstance(elem, dict):
+                raw = elem
+                break
+    if not isinstance(raw, dict):
+        raw = {}
+
+    passenger_id = int(raw.get("id", 0))
     unit_id: int | None = int(raw["bu"]) if raw.get("bu") else None
     if unit_id is None:
         for uid, tid in bindings.items():
@@ -36,11 +46,20 @@ def _map_passenger(raw: dict, bindings: dict[int, int]) -> PassengerResponse:
                 unit_id = uid
                 break
 
+    jp = raw.get("jp", {})
+    if isinstance(jp, str):
+        try:
+            jp = json.loads(jp)
+        except Exception:
+            jp = {}
+    elif not isinstance(jp, dict):
+        jp = {}
+
     return PassengerResponse(
         id=passenger_id,
         name=raw.get("n", ""),
         code=raw.get("c", ""),
-        custom_params=raw.get("jp", {}),
+        custom_params={str(k): str(v) for k, v in jp.items()},
         assigned_unit_id=unit_id,
     )
 
@@ -254,7 +273,10 @@ class PassengerService:
     ) -> None:
         """Desvincula un pasajero de una unidad."""
         resource_id = await self._get_resource_id()
-        await self._gw.unbind_passenger_from_unit(resource_id, unit_id)
+        try:
+            await self._gw.unbind_passenger_from_unit(resource_id, unit_id, passenger_id=passenger_id)
+        except Exception:
+            pass
         await self._emit_audit(
             action="unbind",
             resource_id=str(passenger_id),

@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from typing import Any
+
 from app.api.v1.schemas.driver import (
     DriverCreate,
     DriverPageResponse,
@@ -26,9 +28,17 @@ from app.infrastructure.database.models import AuditLog
 from app.infrastructure.wialon.gateway import WialonGateway
 
 
-def _map_driver(raw: dict, bindings: dict[int, int]) -> DriverResponse:
+def _map_driver(raw: Any, bindings: dict[int, int]) -> DriverResponse:
     """Convierte un driver crudo de Wialon a DriverResponse."""
-    driver_id = int(raw["id"])
+    if isinstance(raw, list):
+        for elem in raw:
+            if isinstance(elem, dict):
+                raw = elem
+                break
+    if not isinstance(raw, dict):
+        raw = {}
+
+    driver_id = int(raw.get("id", 0))
     unit_id: int | None = int(raw["bu"]) if raw.get("bu") else None
     if unit_id is None:
         for uid, did in bindings.items():
@@ -38,7 +48,7 @@ def _map_driver(raw: dict, bindings: dict[int, int]) -> DriverResponse:
 
     return DriverResponse(
         id=driver_id,
-        name=raw.get("n", ""),
+        name=raw.get("n") or raw.get("nm") or "",
         code=raw.get("c") or raw.get("cod") or "",
         phone=raw.get("p") or raw.get("ph") or "",
         description=raw.get("ds", ""),
@@ -91,7 +101,27 @@ class DriverService:
         raw_drivers = await self._gw.get_drivers(resource_id)
         bindings = await self._gw.get_driver_bindings(resource_id)
 
-        drivers = [_map_driver(d, bindings) for d in raw_drivers]
+        # Regla de negocio: Un vehículo (camión) solo puede tener UN conductor asignado.
+        # Determinamos el conductor dueño de cada unidad priorizando el timestamp 'bt' (última vinculación)
+        unit_owner: dict[int, tuple[int, int]] = {}  # unit_id -> (driver_id, bt)
+        for d in raw_drivers:
+            bu = d.get("bu")
+            if bu:
+                uid = int(bu)
+                did = int(d.get("id", 0))
+                bt = int(d.get("bt") or 0)
+                if uid not in unit_owner or bt >= unit_owner[uid][1]:
+                    unit_owner[uid] = (did, bt)
+
+        drivers = []
+        for d in raw_drivers:
+            mapped = _map_driver(d, bindings)
+            if mapped.assigned_unit_id is not None:
+                owner_did, _ = unit_owner.get(mapped.assigned_unit_id, (None, 0))
+                # Si este conductor no es el dueño más reciente del vehículo, queda como no asignado
+                if owner_did is not None and owner_did != mapped.id:
+                    mapped = mapped.model_copy(update={"assigned_unit_id": None})
+            drivers.append(mapped)
 
         if search:
             q = search.strip().casefold()
@@ -233,8 +263,32 @@ class DriverService:
         user_id: int | None = None,
         ip_address: str | None = None,
     ) -> None:
-        """Vincula un conductor a una unidad."""
+        """Vincula un conductor a una unidad, garantizando exclusividad 1 a 1."""
         resource_id = await self._get_resource_id()
+
+        # 1. Si la unidad ya está asignada a otro conductor, desvincularla primero
+        raw_drivers = await self._gw.get_drivers(resource_id)
+        for d in raw_drivers:
+            bu = d.get("bu")
+            if bu and int(bu) == unit_id and int(d.get("id", 0)) != driver_id:
+                try:
+                    await self._gw.unbind_driver_from_unit(resource_id, unit_id)
+                except Exception:
+                    pass
+                break
+
+        # 2. Si este conductor tenía otra unidad asignada, desvincular la anterior
+        for d in raw_drivers:
+            if int(d.get("id", 0)) == driver_id:
+                prev_unit = d.get("bu")
+                if prev_unit and int(prev_unit) != unit_id:
+                    try:
+                        await self._gw.unbind_driver_from_unit(resource_id, int(prev_unit))
+                    except Exception:
+                        pass
+                break
+
+        # 3. Vincular el nuevo conductor a la unidad
         await self._gw.bind_driver_to_unit(resource_id, driver_id, unit_id)
         await self._emit_audit(
             action="bind",
@@ -252,9 +306,13 @@ class DriverService:
         user_id: int | None = None,
         ip_address: str | None = None,
     ) -> None:
-        """Desvincula un conductor de una unidad."""
+        """Desvincula un conductor de una unidad de forma segura e idempotente."""
         resource_id = await self._get_resource_id()
-        await self._gw.unbind_driver_from_unit(resource_id, unit_id)
+        try:
+            await self._gw.unbind_driver_from_unit(resource_id, unit_id)
+        except Exception:
+            pass
+
         await self._emit_audit(
             action="unbind",
             resource_id=str(driver_id),

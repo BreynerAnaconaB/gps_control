@@ -9,12 +9,25 @@ propagan como WialonAPIException.
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from app.core.exceptions import AppException, WialonAPIException
 from app.infrastructure.wialon.session import WialonSessionManager
 
 # Flags para core/search_items de avl_resource: datos base + conductores + tags
 _RESOURCE_FLAGS = 1 | 2 | 256 | 512  # sys_base | name | drivers | tags
+
+
+def _unwrap_wialon_item(result: Any) -> dict:
+    """Extrae el dict de un resultado de update_driver / update_tag que Wialon retorna como [id, {...}]."""
+    if isinstance(result, list):
+        for elem in result:
+            if isinstance(elem, dict):
+                return elem
+        return {}
+    if isinstance(result, dict):
+        return result
+    return {}
 
 
 class WialonGateway:
@@ -113,7 +126,7 @@ class WialonGateway:
                 "r": 0,
             },
         )
-        return result  # type: ignore[return-value]
+        return _unwrap_wialon_item(result)
 
     async def update_driver(
         self,
@@ -141,7 +154,7 @@ class WialonGateway:
                 "r": 0,
             },
         )
-        return result  # type: ignore[return-value]
+        return _unwrap_wialon_item(result)
 
     async def delete_driver(self, resource_id: int, driver_id: int) -> None:
         """Elimina un conductor del recurso."""
@@ -162,29 +175,31 @@ class WialonGateway:
             "resource/bind_unit_driver",
             {
                 "resourceId": resource_id,
-                "unitId": unit_id,
                 "itemId": unit_id,
                 "driverId": driver_id,
                 "time": 0,
-                "mode": 1,
             },
         )
 
     async def unbind_driver_from_unit(
         self, resource_id: int, unit_id: int, driver_id: int | None = None
     ) -> None:
-        """Desvincula el conductor de la unidad en Wialon."""
-        await self._call(
-            "resource/bind_unit_driver",
-            {
-                "resourceId": resource_id,
-                "unitId": unit_id,
-                "itemId": unit_id,
-                "driverId": 0,
-                "time": 0,
-                "mode": 0,
-            },
-        )
+        """Desvincula el conductor de la unidad en Wialon de forma idempotente."""
+        try:
+            await self._call(
+                "resource/bind_unit_driver",
+                {
+                    "resourceId": resource_id,
+                    "itemId": unit_id,
+                    "driverId": 0,
+                    "time": 0,
+                },
+            )
+        except WialonAPIException as exc:
+            # Tolerancia: error 4 (parámetros no aplicables) o error 6 (no vinculado/no encontrado)
+            if exc.api_error_code in (4, 6, 7):
+                return
+            raise
 
     async def get_driver_bindings(self, resource_id: int) -> dict[int, int]:
         """
@@ -242,7 +257,7 @@ class WialonGateway:
                 "jp": json.dumps(custom_params),
             },
         )
-        return result  # type: ignore[return-value]
+        return _unwrap_wialon_item(result)
 
     async def update_passenger(
         self,
@@ -264,7 +279,7 @@ class WialonGateway:
                 "jp": json.dumps(custom_params),
             },
         )
-        return result  # type: ignore[return-value]
+        return _unwrap_wialon_item(result)
 
     async def delete_passenger(self, resource_id: int, passenger_id: int) -> None:
         """Elimina un pasajero (tag) del recurso."""
@@ -295,17 +310,22 @@ class WialonGateway:
     async def unbind_passenger_from_unit(
         self, resource_id: int, unit_id: int, passenger_id: int | None = None
     ) -> None:
-        """Desvincula el pasajero activo de una unidad en Wialon."""
-        await self._call(
-            "resource/bind_unit_tag",
-            {
-                "resourceId": resource_id,
-                "unitId": unit_id,
-                "tagId": 0,
-                "time": 0,
-                "mode": 0,
-            },
-        )
+        """Desvincula el pasajero activo de una unidad en Wialon de forma idempotente."""
+        try:
+            await self._call(
+                "resource/bind_unit_tag",
+                {
+                    "resourceId": resource_id,
+                    "unitId": unit_id,
+                    "tagId": passenger_id or 0,
+                    "time": 0,
+                    "mode": 0,
+                },
+            )
+        except WialonAPIException as exc:
+            if exc.api_error_code in (4, 6, 7):
+                return
+            raise
 
     async def get_passenger_bindings(self, resource_id: int) -> dict[int, int]:
         """

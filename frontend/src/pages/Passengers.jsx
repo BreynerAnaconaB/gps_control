@@ -222,6 +222,8 @@ export default function Passengers() {
       } else if (bindTarget.assigned_unit_id) {
         await unbindPassenger(bindTarget.id, bindTarget.assigned_unit_id)
         toast('success', 'Pasajero desvinculado del vehículo')
+      } else {
+        toast('info', 'El pasajero ya no tenía vehículo asignado')
       }
       setBindModalOpen(false)
 
