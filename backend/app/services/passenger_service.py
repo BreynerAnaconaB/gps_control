@@ -252,9 +252,27 @@ class PassengerService:
         user_id: int | None = None,
         ip_address: str | None = None,
     ) -> None:
-        """Vincula un pasajero a una unidad."""
+        """Vincula un pasajero a una unidad gestionando permisos de Wialon (RF-09)."""
+        from app.core.exceptions import WialonAPIException
+
         resource_id = await self._get_resource_id()
-        await self._gw.bind_passenger_to_unit(resource_id, passenger_id, unit_id)
+        try:
+            await self._gw.bind_passenger_to_unit(resource_id, passenger_id, unit_id)
+        except WialonAPIException as exc:
+            if exc.api_error_code == 7:
+                raise AppException(
+                    message="El token de Wialon no cuenta con permisos ACL para vincular pasajeros a esta unidad (Código 7: Acceso Denegado).",
+                    code="WIALON_PERMISSION_DENIED",
+                    status_code=403,
+                )
+            elif exc.api_error_code == 4:
+                raise AppException(
+                    message="Pasajero o unidad inexistente en Wialon.",
+                    code="NOT_FOUND",
+                    status_code=404,
+                )
+            raise
+
         await self._emit_audit(
             action="bind",
             resource_id=str(passenger_id),

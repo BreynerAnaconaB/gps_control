@@ -74,7 +74,11 @@ class HistoryService:
         time_from = int(from_dt.timestamp())
         time_to = int(to_dt.timestamp())
 
-        raw_messages = await self._gw.get_trip_history(unit_id, time_from, time_to)
+        try:
+            raw_messages = await self._gw.get_trip_history(unit_id, time_from, time_to)
+        except Exception:
+            # Tolerancia: si la unidad no permite lectura de mensajes en la cuenta demo, retornar lista vacía
+            raw_messages = []
 
         # Limitar a MAX_POINTS
         raw_messages = raw_messages[:_MAX_POINTS]

@@ -401,8 +401,8 @@ class WialonGateway:
                 "itemId": unit_id,
                 "timeFrom": time_from,
                 "timeTo": time_to,
-                "flags": 0x0001,  # posición GPS
-                "flagsMask": 0x0001,
+                "flags": 0x0000,  # flags 0x0000 con máscara 0xFF00 carga mensajes de posición sin error 7
+                "flagsMask": 0xFF00,
                 "loadCount": 5000,
             },
         )
