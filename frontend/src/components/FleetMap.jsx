@@ -1,14 +1,16 @@
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   MapContainer,
   TileLayer,
   Marker,
   Popup,
+  Circle,
   useMap,
 } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import L from 'leaflet'
+import { getGeofences } from '../services/vehicleService'
 import 'leaflet/dist/leaflet.css'
 
 function createVehicleIcon(status) {
@@ -82,6 +84,17 @@ export default function FleetMap({
   selectedVehicle,
   onSelect,
 }) {
+  const [geofences, setGeofences] = useState([])
+  const [showGeofences, setShowGeofences] = useState(true)
+
+  useEffect(() => {
+    getGeofences()
+      .then((data) => {
+        if (Array.isArray(data)) setGeofences(data)
+      })
+      .catch(() => {})
+  }, [])
+
   const validVehicles = vehicles.filter(
     (vehicle) =>
       Number.isFinite(vehicle.latitude) &&
@@ -151,10 +164,53 @@ export default function FleetMap({
 
         <FitAllVehicles vehicles={validVehicles} />
         <MapFocus vehicle={selectedVehicle} />
+
+        {/* Visualización de Geocercas de Wialon (Bonus 12) */}
+        {showGeofences &&
+          geofences.map((gf) => (
+            <Circle
+              key={`gf-${gf.id}`}
+              center={[gf.latitude, gf.longitude]}
+              radius={gf.radius || 100}
+              pathOptions={{
+                color: '#1E8C93',
+                fillColor: '#1E8C93',
+                fillOpacity: 0.18,
+                weight: 2,
+                dashArray: '4, 4',
+              }}
+            >
+              <Popup>
+                <strong>Geocerca Wialon:</strong> {gf.name}
+                <br />
+                {gf.description && <small>{gf.description}<br /></small>}
+                Radio: {gf.radius || 100} m
+              </Popup>
+            </Circle>
+          ))}
       </MapContainer>
 
-      <div className="map-counter">
-        {validVehicles.length} vehículos con ubicación
+      <div className="map-counter" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <span>{validVehicles.length} vehículos con ubicación</span>
+        {geofences.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowGeofences(!showGeofences)}
+            style={{
+              background: showGeofences ? 'var(--brand-teal)' : 'var(--bg-surface-alt)',
+              color: showGeofences ? '#fff' : 'var(--text-secondary)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '2px 8px',
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+            title="Activar/Desactivar visualización de geocercas"
+          >
+            {showGeofences ? `Geocercas (${geofences.length})` : 'Mostrar Geocercas'}
+          </button>
+        )}
       </div>
     </div>
   )

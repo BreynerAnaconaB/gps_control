@@ -1,0 +1,79 @@
+# ============================================================
+# docker-compose.yml — GPS Control (dev + local prod)
+# ============================================================
+# Usage:
+#   Dev:   docker compose up                (hot-reload backend)
+#   Prod:  docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+# ============================================================
+
+services:
+
+  # ----------------------------------------------------------
+  # PostgreSQL (optional for local dev; default uses SQLite)
+  # ----------------------------------------------------------
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gpscontrol
+      POSTGRES_USER: gpscontrol
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gpscontrol"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------
+  # Backend — FastAPI
+  # ----------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment:
+      # Override DATABASE_URL to use PostgreSQL container
+      DATABASE_URL: postgresql+asyncpg://gpscontrol:${POSTGRES_PASSWORD:-changeme}@db:5432/gpscontrol
+      APP_ENV: production
+      DEBUG: "false"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "
+        python -m scripts.seed_admin &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+      "
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ----------------------------------------------------------
+  # Frontend — Nginx + React build
+  # ----------------------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api/v1}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+

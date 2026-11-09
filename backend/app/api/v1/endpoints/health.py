@@ -80,3 +80,40 @@ async def health_check_detail():
             "checks": checks,
         },
     )
+
+
+# ---------------------------------------------------------------------------
+# Metrics & Observability (Bonus 12)
+# ---------------------------------------------------------------------------
+import os
+import resource
+import sys
+import time
+
+_START_TIME = time.time()
+
+
+@router.get("/metrics", tags=["Observability"], include_in_schema=True)
+async def get_metrics():
+    """
+    Metricas operativas y observabilidad del sistema en produccion (Bonus 12).
+    """
+    uptime = time.time() - _START_TIME
+    rusage = resource.getrusage(resource.RUSAGE_SELF)
+    # En macOS maxrss es en bytes, en Linux en KB
+    rss_mb = (rusage.ru_maxrss / (1024 * 1024)) if sys.platform == "darwin" else (rusage.ru_maxrss / 1024)
+
+    return {
+        "service": settings.APP_NAME,
+        "environment": settings.APP_ENV,
+        "uptime_seconds": round(uptime, 1),
+        "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+        "memory": {
+            "rss_mb": round(rss_mb, 2),
+        },
+        "system": {
+            "platform": sys.platform,
+            "pid": os.getpid(),
+        },
+    }
+

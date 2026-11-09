@@ -412,6 +412,40 @@ class WialonGateway:
         return []
 
     # ------------------------------------------------------------------
+    # Geocercas (Zonas en Wialon - Bonus 12)
+    # ------------------------------------------------------------------
+
+    async def get_geofences(self, resource_id: int) -> list[dict]:
+        """
+        Retorna las geocercas (zonas) asociadas al recurso en Wialon.
+        Flag 4096 (0x1000) = zl (zonas/geocercas).
+        """
+        item = await self._get_resource(resource_id, flags=1 | 4096)
+        zl = item.get("zl", {})
+        geofences = []
+        for zid, z in zl.items():
+            b = z.get("b", {})
+            cen_lat = b.get("cen_y")
+            cen_lon = b.get("cen_x")
+            if cen_lat is not None and cen_lon is not None:
+                geofences.append({
+                    "id": int(z.get("id", zid)),
+                    "name": z.get("n", f"Geocerca {zid}"),
+                    "description": z.get("d", ""),
+                    "type": z.get("t", 1),
+                    "radius": z.get("w", 100),
+                    "latitude": float(cen_lat),
+                    "longitude": float(cen_lon),
+                    "bounds": {
+                        "min_lat": b.get("min_y"),
+                        "min_lon": b.get("min_x"),
+                        "max_lat": b.get("max_y"),
+                        "max_lon": b.get("max_x"),
+                    }
+                })
+        return geofences
+
+    # ------------------------------------------------------------------
     # Audit / last messages
     # ------------------------------------------------------------------
 
@@ -433,3 +467,37 @@ class WialonGateway:
         if isinstance(result, dict):
             return result.get("messages", [])
         return []
+
+    # ------------------------------------------------------------------
+    # Geocercas (Zonas en Wialon - Bonus 12)
+    # ------------------------------------------------------------------
+
+    async def get_geofences(self, resource_id: int) -> list[dict]:
+        """
+        Retorna las geocercas (zonas) asociadas al recurso en Wialon.
+        Flag 4096 (0x1000) = zl (zonas/geocercas).
+        """
+        item = await self._get_resource(resource_id, flags=1 | 4096)
+        zl = item.get("zl", {})
+        geofences = []
+        for zid, z in zl.items():
+            b = z.get("b", {})
+            cen_lat = b.get("cen_y")
+            cen_lon = b.get("cen_x")
+            if cen_lat is not None and cen_lon is not None:
+                geofences.append({
+                    "id": int(z.get("id", zid)),
+                    "name": z.get("n", f"Geocerca {zid}"),
+                    "description": z.get("d", ""),
+                    "type": z.get("t", 1),
+                    "radius": z.get("w", 100),
+                    "latitude": float(cen_lat),
+                    "longitude": float(cen_lon),
+                    "bounds": {
+                        "min_lat": b.get("min_y"),
+                        "min_lon": b.get("min_x"),
+                        "max_lat": b.get("max_y"),
+                        "max_lon": b.get("max_x"),
+                    }
+                })
+        return geofences

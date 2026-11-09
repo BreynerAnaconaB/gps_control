@@ -26,3 +26,17 @@ async def test_health_detail_returns_structure():
     assert "checks" in body
     assert "database" in body["checks"]
     assert "wialon" in body["checks"]
+
+
+@pytest.mark.anyio
+async def test_metrics_endpoint():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get("/api/v1/metrics")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "uptime_seconds" in body
+    assert "memory" in body
+    assert "rss_mb" in body["memory"]
+    assert "python_version" in body
+
+

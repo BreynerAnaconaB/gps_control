@@ -60,3 +60,34 @@ async def test_concurrent_requests_share_one_load():
 
     assert calls == 1
     assert results == [["vehicle-1"]] * 3
+
+
+@pytest.mark.asyncio
+async def test_stale_while_revalidate_serves_stale_and_refreshes():
+    cache = AsyncTTLCache(ttl_seconds=0, stale_ttl_seconds=10)
+    counter = 0
+
+    async def loader():
+        nonlocal counter
+        counter += 1
+        await asyncio.sleep(0.01)
+        return f"version-{counter}"
+
+    # Primera carga
+    first = await cache.get_or_load(loader)
+    assert first == "version-1"
+    assert counter == 1
+
+    # Segunda carga inmediata: TTL (0s) vencido, pero dentro de stale_ttl (10s).
+    # Debe retornar "version-1" de inmediato y lanzar tarea en background.
+    stale = await cache.get_or_load(loader)
+    assert stale == "version-1"
+
+    # Esperamos a que la tarea en background finalice
+    await asyncio.sleep(0.05)
+    assert counter == 2
+
+    # Siguiente carga ya tiene la nueva versión revalidada
+    refreshed = await cache.get_or_load(loader)
+    assert refreshed == "version-2"
+

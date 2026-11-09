@@ -4,6 +4,7 @@ import { Clock3, Download, ServerCrash } from 'lucide-react'
 
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { LanguageProvider } from './context/LanguageContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import RoleGuard from './components/RoleGuard'
 import AppLayout from './components/AppLayout'
@@ -617,81 +618,83 @@ export default function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <AuthProvider>
-          <ColdStartBanner />
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
+        <LanguageProvider>
+          <AuthProvider>
+            <ColdStartBanner />
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
 
-            {/* Protected routes */}
-            <Route
-              path="/app"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
+              {/* Protected routes */}
+              <Route
+                path="/app"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/app/drivers"
-              element={
-                <ProtectedRoute>
-                  <Drivers />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/app/drivers"
+                element={
+                  <ProtectedRoute>
+                    <Drivers />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/app/passengers"
-              element={
-                <ProtectedRoute>
-                  <Passengers />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/app/passengers"
+                element={
+                  <ProtectedRoute>
+                    <Passengers />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/app/history"
-              element={
-                <ProtectedRoute>
-                  <History />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/app/history"
+                element={
+                  <ProtectedRoute>
+                    <History />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/app/users"
-              element={
-                <ProtectedRoute>
-                  <Users />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/app/users"
+                element={
+                  <ProtectedRoute>
+                    <Users />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/app/audit"
-              element={
-                <ProtectedRoute>
-                  <Audit />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/app/audit"
+                element={
+                  <ProtectedRoute>
+                    <Audit />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/app/change-password"
-              element={
-                <ProtectedRoute>
-                  <ChangePassword />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/app/change-password"
+                element={
+                  <ProtectedRoute>
+                    <ChangePassword />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </AuthProvider>
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </AuthProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </BrowserRouter>
   )

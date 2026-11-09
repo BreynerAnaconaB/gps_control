@@ -1,6 +1,7 @@
-import { Moon, Sun, RefreshCw, Bell, LogOut, Menu, X } from 'lucide-react'
+import { Moon, Sun, RefreshCw, Bell, LogOut, Menu, X, Globe } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { useLanguage } from '../context/LanguageContext'
 import './TopBar.css'
 
 export default function TopBar({
@@ -14,6 +15,7 @@ export default function TopBar({
 }) {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
+  const { language, setLanguage, t } = useLanguage()
 
   const roleLabels = {
     admin: 'Admin',
@@ -76,6 +78,18 @@ export default function TopBar({
           aria-label="Cambiar tema de color"
         >
           {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+        </button>
+
+        {/* Language switch (ES / EN - Bonus 12) */}
+        <button
+          type="button"
+          className="topbar-icon-btn"
+          onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+          title={language === 'es' ? 'Switch to English' : 'Cambiar a Español'}
+          aria-label="Cambiar idioma"
+          style={{ fontSize: '0.74rem', fontWeight: 800, letterSpacing: '0.04em' }}
+        >
+          {language.toUpperCase()}
         </button>
 
         {/* User badge */}

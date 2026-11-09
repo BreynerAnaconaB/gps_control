@@ -253,3 +253,19 @@ async def delete_vehicle_custom_field(
         field_id=field_id,
     )
 
+
+@router.get(
+    "/geofences",
+    tags=["Vehicles"],
+    dependencies=[Depends(require_permission("read", "vehicles"))],
+)
+async def list_geofences(
+    gateway: WialonGateway = Depends(get_wialon_gateway),
+):
+    """
+    Lista las geocercas configuradas en Wialon para visualizacion en mapa (Bonus 12).
+    """
+    resource_id = await gateway.get_first_resource_id()
+    return await gateway.get_geofences(resource_id)
+
+

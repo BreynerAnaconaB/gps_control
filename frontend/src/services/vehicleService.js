@@ -86,3 +86,11 @@ export async function updateVehicleCustomFields(vehicleId, fields) {
 export async function deleteVehicleCustomField(vehicleId, fieldId) {
   return apiDelete(`/vehicles/${vehicleId}/custom-fields/${fieldId}`)
 }
+
+/**
+ * Consulta las geocercas activas en Wialon para visualización en mapa (Bonus 12).
+ */
+export async function getGeofences() {
+  return apiGet('/geofences')
+}
+
