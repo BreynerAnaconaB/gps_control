@@ -261,6 +261,7 @@ async def test_create_user_success(db_session):
     )
 
     assert new_user.email == "newuser@test.com"
+    assert new_user.role.name == RoleName.viewer
     assert new_user.must_change_password is True  # RF-06
 
 
@@ -280,4 +281,31 @@ async def test_create_duplicate_user_fails(db_session):
         )
 
     assert exc_info.value.code == "EMAIL_ALREADY_EXISTS"
+
+
+@pytest.mark.asyncio
+async def test_update_user_role_and_active(db_session):
+    admin = await _create_user(db_session, email="admin_up@test.com", password="adminpass")
+    viewer_role = Role(name=RoleName.viewer)
+    operator_role = Role(name=RoleName.operator)
+    db_session.add_all([viewer_role, operator_role])
+    await db_session.commit()
+
+    service = AuthService(db_session)
+    user = await service.create_user(
+        email="target@test.com",
+        password="pass12345",
+        role_name=RoleName.viewer,
+        created_by_id=admin.id,
+    )
+
+    updated = await service.update_user(
+        target_user_id=user.id,
+        updated_by_id=admin.id,
+        is_active=False,
+        role_name=RoleName.operator,
+    )
+
+    assert updated.is_active is False
+    assert updated.role.name == RoleName.operator
 

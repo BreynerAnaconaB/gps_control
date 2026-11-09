@@ -80,13 +80,16 @@ export default function Users() {
 
     try {
       setCreateSubmitting(true)
-      await createUser(emailVal, passVal, newRole)
+      const created = await createUser(emailVal, passVal, newRole)
       toast('success', 'Usuario creado exitosamente (deberá cambiar contraseña en su primer inicio)')
       setCreateModalOpen(false)
       setNewEmail('')
       setNewPassword('')
       setNewRole('operator')
-      loadUsers()
+      if (created) {
+        setUsers((prev) => [created, ...prev.filter((u) => u.id !== created.id)])
+      }
+      await loadUsers()
     } catch (err) {
       toast('error', err.message || 'Error al crear usuario')
     } finally {
@@ -127,14 +130,21 @@ export default function Users() {
 
   async function handleToggleConfirm() {
     if (!toggleTargetUser) return
+    const targetId = toggleTargetUser.id
+    const nextActive = !toggleTargetUser.is_active
     try {
       setToggleSubmitting(true)
-      const nextActive = !toggleTargetUser.is_active
-      await updateUser(toggleTargetUser.id, { is_active: nextActive })
+      setUsers((prev) =>
+        prev.map((u) => (u.id === targetId ? { ...u, is_active: nextActive } : u))
+      )
+      await updateUser(targetId, { is_active: nextActive })
       toast('success', `Usuario ${nextActive ? 'activado' : 'desactivado'}`)
       setToggleDialogOpen(false)
       loadUsers()
     } catch (err) {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === targetId ? { ...u, is_active: !nextActive } : u))
+      )
       toast('error', err.message || 'Error al actualizar usuario')
     } finally {
       setToggleSubmitting(false)
@@ -142,11 +152,18 @@ export default function Users() {
   }
 
   async function handleRoleChange(user, nextRole) {
+    const prevRole = user.role
     try {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === user.id ? { ...u, role: nextRole } : u))
+      )
       await updateUser(user.id, { role: nextRole })
       toast('success', `Rol actualizado a ${nextRole}`)
       loadUsers()
     } catch (err) {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === user.id ? { ...u, role: prevRole } : u))
+      )
       toast('error', err.message || 'Error al cambiar rol')
     }
   }

@@ -123,7 +123,7 @@ class User(Base):
         nullable=False,
     )
 
-    role: Mapped[Role] = relationship(back_populates="users")
+    role: Mapped[Role] = relationship(back_populates="users", lazy="selectin")
     audit_logs: Mapped[list[AuditLog]] = relationship(back_populates="user")
     refresh_tokens: Mapped[list[RefreshToken]] = relationship(
         back_populates="user",

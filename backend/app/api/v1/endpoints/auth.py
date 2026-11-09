@@ -271,10 +271,11 @@ async def create_user(
         role_name=body.role,
         created_by_id=current_user.id,
     )
+    role_name = user.role.name if getattr(user, "role", None) else str(body.role)
     return UserResponse(
         id=user.id,
         email=user.email,
-        role=user.role.name,
+        role=role_name,
         is_active=user.is_active,
         must_change_password=user.must_change_password,
     )
@@ -299,10 +300,11 @@ async def update_user(
         role_name=body.role,
         reset_password=body.new_password,
     )
+    role_name = user.role.name if getattr(user, "role", None) else str(body.role)
     return UserResponse(
         id=user.id,
         email=user.email,
-        role=user.role.name,
+        role=role_name,
         is_active=user.is_active,
         must_change_password=user.must_change_password,
     )

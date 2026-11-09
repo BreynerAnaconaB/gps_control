@@ -360,6 +360,7 @@ class AuthService:
             email=normalized_email,
             password_hash=hash_password(password),
             role_id=role.id,
+            role=role,
             is_active=True,
             must_change_password=True,  # RF-06: must change on first login
         )
@@ -374,9 +375,8 @@ class AuthService:
             detail=f"email={normalized_email}, role={role_name}",
         )
         await self.db.commit()
-        await self.db.refresh(new_user)
-
-        return new_user
+        user = await self._get_user_by_id(new_user.id)
+        return user or new_user
 
     # ------------------------------------------------------------------
     # Admin: update user (RF-06)
@@ -412,6 +412,7 @@ class AuthService:
             role = result.scalar_one_or_none()
             if role and user.role_id != role.id:
                 user.role_id = role.id
+                user.role = role
                 changes.append(f"role={role_name}")
 
         if reset_password is not None:
@@ -428,8 +429,8 @@ class AuthService:
                 detail=", ".join(changes),
             )
             await self.db.commit()
-            await self.db.refresh(user)
 
+        user = await self._get_user_by_id(target_user_id)
         return user
 
     # ------------------------------------------------------------------
