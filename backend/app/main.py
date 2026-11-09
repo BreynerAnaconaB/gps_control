@@ -101,10 +101,9 @@ app = FastAPI(
     title=settings.APP_NAME,
     description="API para la gestión y monitoreo de flotas vehiculares.",
     version="1.0.0",
-    # Disable docs in production (SEG-05)
-    docs_url="/api/docs" if settings.DEBUG else None,
-    redoc_url="/api/redoc" if settings.DEBUG else None,
-    openapi_url="/api/openapi.json" if settings.DEBUG else None,
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
     debug=settings.DEBUG,
     lifespan=lifespan,
 )

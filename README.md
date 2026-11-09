@@ -12,7 +12,7 @@ Plataforma web full stack para el monitoreo y la administración de flotas vehic
 |---|---|
 | Aplicación web | https://gps-control-pi.vercel.app |
 | API REST (base) | https://gpscontrol-production.up.railway.app/api/v1 |
-| Documentación Swagger | `https://gpscontrol-production.up.railway.app/api/docs` *(disponibilidad sujeta a la configuración de producción)* |
+| Documentación Swagger | https://gpscontrol-production.up.railway.app/api/docs |
 | Repositorio | https://github.com/BreynerAnaconaB/gps_control |
 
 > **Acceso de demostración:** no se publican contraseñas ni tokens en este repositorio. Si se habilita una cuenta de demostración, sus credenciales deben entregarse por un canal separado y seguro. El usuario administrador inicial se configura mediante las variables de entorno utilizadas por `scripts/seed_admin.py`.
